@@ -8,7 +8,7 @@ const pkg = require('../package.json');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// ── Auth config ──
+// -- Auth config --
 const AUTH_USER   = process.env.AUTH_USER   || '';
 const AUTH_PASS   = process.env.AUTH_PASS   || '';
 const AUTH_SECRET = process.env.AUTH_SECRET || crypto.randomBytes(32).toString('hex');
@@ -17,7 +17,7 @@ const COOKIE_NAME = 'kompoz_auth';
 const TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 function signToken(username, expiry) {
-  const payload = `${username}:${expiry}`;
+  const payload = username + ':' + expiry;
   const sig = crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest('base64url');
   return Buffer.from(payload).toString('base64url') + '.' + sig;
 }
@@ -51,13 +51,10 @@ function parseCookies(req) {
 
 function requireAuth(req, res, next) {
   if (!AUTH_ENABLED) return next();
-  // Allow login page and login API
   if (req.path === '/login.html' || req.path === '/api/login') return next();
-  // Allow healthcheck endpoint
   if (req.path === '/api/info') return next();
-  // Allow locales (i18n)
+  if (req.path === '/api/latest-release') return next();
   if (req.path.startsWith('/locales/') || req.path === '/api/locales') return next();
-  // Allow static assets for login page
   if (req.path.startsWith('/css/') || req.path.startsWith('/js/')) return next();
 
   const cookies = parseCookies(req);
@@ -90,17 +87,17 @@ app.post('/api/login', (req, res) => {
   }
   const expiry = Date.now() + TOKEN_TTL_MS;
   const token = signToken(username, expiry);
-  res.setHeader('Set-Cookie', `${COOKIE_NAME}=${token}; HttpOnly; Path=/; Max-Age=${TOKEN_TTL_MS / 1000}; SameSite=Strict`);
+  res.setHeader('Set-Cookie', COOKIE_NAME + '=' + token + '; HttpOnly; Path=/; Max-Age=' + (TOKEN_TTL_MS / 1000) + '; SameSite=Strict');
   res.json({ ok: true });
-}); } module.exports = app;
+});
 
 // POST /api/logout
 app.post('/api/logout', (req, res) => {
-  res.setHeader('Set-Cookie', `${COOKIE_NAME}=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict`);
+  res.setHeader('Set-Cookie', COOKIE_NAME + '=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict');
   res.json({ ok: true });
-}); } module.exports = app;
+});
 
-// GET /api/locales — список доступных языков
+// GET /api/locales -- list available languages
 app.get('/api/locales', (req, res) => {
   try {
     const localesDir = path.join(__dirname, '../locales');
@@ -109,42 +106,52 @@ app.get('/api/locales', (req, res) => {
       const code = f.replace('.json', '');
       const raw = fs.readFileSync(path.join(localesDir, f), 'utf8');
       const content = JSON.parse(raw);
-      return {
-        code,
-        name: content._meta?.name || code,
-      };
+      return { code, name: content._meta?.name || code };
     });
     res.json({ locales });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-}); } module.exports = app;
+});
 
-// GET /api/me — текущий пользователь
-app.get("/api/me", (req, res) => {
+// GET /api/me -- current user
+app.get('/api/me', (req, res) => {
   if (!AUTH_ENABLED) return res.json({ enabled: false });
-  if (!req.authUser) return res.status(401).json({ error: "Unauthorized" });
+  if (!req.authUser) return res.status(401).json({ error: 'Unauthorized' });
   res.json({ enabled: true, user: { name: req.authUser } });
-}); } module.exports = app;
+});
 
-// GET /api/info — статус маунтов (для UI)
+// GET /api/info -- mount status (for UI)
 app.get('/api/info', (req, res) => {
   try {
-    const mounts  = getMountRoots();
+    const mounts = getMountRoots();
     const projects = getAllProjects();
     res.json({ mounts, projects, version: pkg.version });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-}); } module.exports = app;
+});
 
-// GET /api/version — application version
+// GET /api/version -- application version
 app.get('/api/version', (req, res) => {
   res.json({ version: pkg.version });
 });
-// GET /api/latest-release — latest GitHub release tagapp.get("/api/latest-release", async (req, res) => {  try {    const r = await fetch("https://api.github.com/repos/John710/kompoz/releases/latest", { headers: { "Accept": "application/vnd.github+json", "User-Agent": "kompoz" } });    if (!r.ok) throw new Error("GitHub API error");    const d = await r.json();    res.json({ tag: d.tag_name, published: d.published_at, url: d.html_url });  } catch (e) {    res.status(502).json({ error: e.message });  }}); } module.exports = app;
 
-// POST /api/verify-password — проверка пароля для опасных операций
+// GET /api/latest-release -- latest GitHub release tag
+app.get('/api/latest-release', async (req, res) => {
+  try {
+    const r = await fetch('https://api.github.com/repos/John710/kompoz/releases/latest', {
+      headers: { 'Accept': 'application/vnd.github+json', 'User-Agent': 'kompoz' }
+    });
+    if (!r.ok) throw new Error('GitHub API error');
+    const d = await r.json();
+    res.json({ tag: d.tag_name, published: d.published_at, url: d.html_url });
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
+// POST /api/verify-password -- password check for dangerous ops
 app.post('/api/verify-password', (req, res) => {
   if (!AUTH_ENABLED) return res.json({ ok: true });
   const { password } = req.body || {};
@@ -152,23 +159,24 @@ app.post('/api/verify-password', (req, res) => {
     return res.status(401).json({ error: 'Invalid password', errorKey: 'invalidPassword' });
   }
   res.json({ ok: true });
-}); } module.exports = app;
-
-if (require.main === module) { app.listen(PORT, () => {
-  const mounts = getMountRoots();
-  console.log(`Kompoz v0.4.5 running on :${PORT}`);
-  if (AUTH_ENABLED) {
-    console.log(`Authentication enabled (user: ${AUTH_USER})`);
-  } else {
-    console.log('Authentication disabled — set AUTH_USER and AUTH_PASS to enable');
-  }
-  console.log(`Mount points (${mounts.length}):`);
-  mounts.forEach(m => {
-    console.log(`  ${m}`);
-  });
-  try {
-    const projects = getAllProjects();
-    console.log(`Projects found: ${projects.map(p => p.name).join(', ') || 'none'}`);
-  } catch {}
 });
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    const mounts = getMountRoots();
+    console.log('Kompoz v' + pkg.version + ' running on :' + PORT);
+    if (AUTH_ENABLED) {
+      console.log('Authentication enabled (user: ' + AUTH_USER + ')');
+    } else {
+      console.log('Authentication disabled -- set AUTH_USER and AUTH_PASS to enable');
+    }
+    console.log('Mount points (' + mounts.length + '):');
+    mounts.forEach(m => console.log('  ' + m));
+    try {
+      const projects = getAllProjects();
+      console.log('Projects found: ' + (projects.map(p => p.name).join(', ') || 'none'));
+    } catch {}
+  });
+}
+
 module.exports = app;

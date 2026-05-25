@@ -1,6 +1,6 @@
 {
   "name": "kompoz",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "description": "Web editor for Docker Compose with a visual dependency map, built-in linter, and bilingual UI.",
   "main": "server/index.js",
   "scripts": {

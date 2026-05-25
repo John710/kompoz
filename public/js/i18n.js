@@ -188,7 +188,7 @@ const I18N = (() => {
 })();
 
 // Global helper for rendering language dropdown
-function toggleLangDropdown() { console.log("toggleLangDropdown called");
+function toggleLangDropdown() { 
   const existing = document.getElementById('langDropdown');
   if (existing) { existing.remove(); return; }
 

@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+README.ru.md
+CONTRIBUTING.md
+LICENSE
+.env
+.env.local
+*.bak
+.vscode
+.idea

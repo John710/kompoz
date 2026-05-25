@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="appTitle">Kompoz</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b8cff' stroke-width='2'><rect x='2' y='3' width='20' height='14' rx='2'/><path d='m8 21 8 0M12 17v4'/><path d='m7 8 2 2-2 2M11 12h4'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- CodeMirror core -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<!-- CodeMirror lint -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/lint/lint.min.css">
+<link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="/css/header.css">
+<style>
+.sidebar-delete-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 6px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--text3); cursor: pointer; transition: all .15s;
+}
+.sidebar-delete-btn:hover { background: rgba(255,91,91,.12); color: var(--red); border-color: var(--red); }
+.proj-delete {
+  display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 5px;
+  color: var(--text3); cursor: pointer; transition: all .12s;
+  margin-left: auto; opacity: 0;
+}
+.proj-dropdown-item:hover .proj-delete { opacity: 1; }
+.proj-delete:hover { background: rgba(255,91,91,.12); color: var(--red); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── Header ── -->
+  <header class="header">
+    <div class="header-logo">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <path d="m8 21 8 0M12 17v4"/>
+        <path d="m7 8 2 2-2 2M11 12h4"/>
+      </svg>
+      <span data-i18n="appTitle">Kompoz</span>
+    </div>
+
+    <div class="project-selector" id="projectSelector" onclick="App.toggleProjectDropdown()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+      </svg>
+      <span class="proj-name" id="projectSelectorName">Загрузка...</span>
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </div>
+
+      <div class="header-actions">
+    <button class="btn" onclick="App.openMap()" style="height:34px;gap:6px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="5" r="3"/><circle cx="19" cy="19" r="3"/><circle cx="5" cy="19" r="3"/>
+        <line x1="12" y1="8" x2="12" y2="14"/><line x1="12" y1="14" x2="19" y2="19"/><line x1="12" y1="14" x2="5" y2="19"/>
+      </svg>
+      <span data-i18n="map">Карта</span>
+    </button>
+    <div class="header-icon-btn" id="langBtn" onclick="toggleLangDropdown()" data-tooltip="Language">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+      </svg>
+    </div>
+    <div class="header-icon-btn" id="themeBtn" onclick="Themes.toggle()" data-tooltip="Theme">
+      <svg class="theme-icon-dark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+      <svg class="theme-icon-light" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+    </div>
+    <a class="header-icon-btn" href="https://github.com" target="_blank" rel="noopener" data-tooltip="GitHub">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+      </svg>
+    </a>
+    <div class="header-profile" id="profileBlock" onclick="toggleProfileDropdown()">
+      <div class="profile-avatar" id="profileAvatar">U</div>
+      <span class="profile-name" id="profileName">User</span>
+      <svg class="profile-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+  </div>
+</header>
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <button class="sidebar-new-btn" onclick="Modals.openNewFile()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        <span data-i18n="newFile">Новый файл</span>
+      </button>
+      <div class="sidebar-search">
+        <input type="text" placeholder="Поиск..." id="searchInput" oninput="App.filterFiles(this.value)" data-i18n="searchPlaceholder" data-i18n-attr="placeholder">
+      </div>
+    </div>
+
+    <div class="sidebar-files" id="fileList">
+      <div class="loading"><div class="spinner"></div><span data-i18n="loading">Загрузка...</span></div>
+    </div>
+
+    <div class="sidebar-footer">
+      <span id="fileCount">0 файлов</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="legend-trigger" id="legendTrigger"
+           onmouseenter="showLegend()" onmouseleave="hideLegend()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <div class="legend-popup" id="legendPopup">
+          <div class="legend-popup-title" data-i18n="fileTypesTitle">Типы файлов</div>
+          <div class="legend-row"><div class="leg-dot" style="background:var(--root-tag)"></div><span data-i18n="legendRoot">root — главный compose</span></div>
+          <div class="legend-row"><div class="leg-dot" style="background:var(--comp-tag)"></div><span data-i18n="legendCompose">compose/ — сервисный файл</span></div>
+          <div class="legend-row"><div class="leg-dot" style="background:var(--yellow)"></div><span data-i18n="legendEnv">.env — переменные</span></div>
+          <div class="legend-row"><div class="leg-dot" style="background:var(--purple)"></div><span data-i18n="legendAppdata">appdata/ — конфиги</span></div>
+          <div class="legend-row"><div class="leg-dot" style="background:var(--red)"></div><span data-i18n="legendSecret">secrets/ — секреты</span></div>
+          <div class="legend-popup-title" style="margin-top:8px" data-i18n="statusTitle">Статус</div>
+          <div class="legend-row"><span style="color:var(--accent);font-size:9px">●</span> <span data-i18n="unsavedChanges">несохранённые изменения</span></div>
+        </div>
+        </div>
+        <div class="sidebar-delete-btn" id="deleteProjectBtn" onclick="App.confirmDeleteProject()" data-tooltip="Delete project" data-i18n="deleteProjectMenu" data-i18n-attr="title" title="">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            <line x1="10" y1="11" x2="10" y2="17"/>
+            <line x1="14" y1="11" x2="14" y2="17"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Editor area ── -->
+  <main class="editor-area">
+    <div class="editor-tabs" id="tabBar">
+      <div class="tab-add" onclick="Modals.openNewFile()" title="" data-i18n="newFileTooltip" data-i18n-attr="title">+</div>
+    </div>
+
+    <div class="editor-toolbar" id="editorToolbar" style="display:none">
+      <div class="toolbar-path" id="toolbarPath"></div>
+      <button class="btn btn-ghost btn-sm" onclick="App.restoreBackup()" title="">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+        <span data-i18n="rollback">Откат</span>
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="App.copyAll()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <rect x="9" y="9" width="13" height="13" rx="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        <span data-i18n="copy">Копировать</span>
+      </button>
+      <button class="btn btn-primary btn-sm" id="saveBtn" onclick="App.saveCurrentFile()" disabled>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        <span data-i18n="save">Сохранить</span>
+      </button>
+    </div>
+
+    <div class="editor-empty" id="emptyState">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>
+      <p data-i18n="selectFile">Выберите файл для редактирования</p>
+      <small data-i18n="orCreateNew">или создайте новый</small>
+    </div>
+
+    <div class="editor-wrap" id="editorWrap" style="display:none">
+      <textarea id="codeEditor"></textarea>
+    </div>
+
+    <div class="editor-statusbar" id="statusBar" style="display:none">
+      <div class="statusbar-item" id="statusLines">0 строк</div>
+      <div class="statusbar-sep"></div>
+      <div class="statusbar-item" id="statusChars">0 символов</div>
+      <div class="statusbar-sep"></div>
+      <div class="statusbar-item" id="statusModified"></div>
+      <div class="statusbar-sep"></div>
+      <div class="statusbar-item" id="statusLint" title=""></div>
+    </div>
+  </main>
+
+  <!-- ── Right panel ── -->
+  <aside class="right-panel">
+    <div class="resizer" id="rightResizer" title="" data-i18n="resizeTooltip" data-i18n-attr="title"></div>
+    <div class="rp-tabs" id="rightPanelTabs"></div>
+    <div class="rp-body" id="rightPanelBody">
+      <div class="rp-empty" data-i18n="loading">Загрузка...</div>
+    </div>
+    <div class="rp-footer" data-i18n-html="rpFooter">Нажмите на элемент<br>чтобы вставить в курсор</div>
+  </aside>
+
+</div><!-- .app -->
+
+<!-- ── New File Modal ── -->
+<div class="modal-overlay" id="newFileModal">
+  <div class="modal">
+    <h3 data-i18n="newFileTitle">Новый файл</h3>
+    <div class="modal-field">
+      <label data-i18n="typeLocation">Тип / расположение</label>
+      <select id="newFileLocation">
+        <option value="compose" data-i18n="optionCompose">compose/ — сервисный файл</option>
+        <option value="root" data-i18n="optionRoot">root — главный docker-compose</option>
+        <option value="env" data-i18n="optionEnv">.env — переменные окружения</option>
+        <option value="appdata" data-i18n="optionAppdata">appdata/ — конфиг приложения</option>
+        <option value="secret" data-i18n="optionSecret">secrets/ — секрет</option>
+      </select>
+    </div>
+    <div class="modal-field" id="newFileNameField">
+      <label data-i18n="fileName">Имя файла</label>
+      <input type="text" id="newFileName" placeholder="myservice.yml"
+        onkeydown="if(event.key==='Enter')Modals.submitNewFile()">
+    </div>
+    <div class="modal-field">
+      <label data-i18n="fullPath">Полный путь</label>
+      <input type="text" id="newFilePath" readonly>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('newFileModal').classList.remove('open')" data-i18n="cancel">Отмена</button>
+      <button class="btn btn-primary" onclick="Modals.submitNewFile()" data-i18n="create">Создать</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── New Project Modal ── -->
+<div class="modal-overlay" id="newProjectModal">
+  <div class="modal">
+    <h3 data-i18n="newProjectTitle">Новый проект</h3>
+    <div class="modal-field">
+      <label data-i18n="projectNameLabel">Название (латиница, цифры, _ -)</label>
+      <input type="text" id="newProjectName" placeholder="my-project"
+        onkeydown="if(event.key==='Enter')Modals.submitNewProject()">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('newProjectModal').classList.remove('open')" data-i18n="cancel">Отмена</button>
+      <button class="btn btn-primary" onclick="Modals.submitNewProject()" data-i18n="create">Создать</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Confirm ── -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirmTitle"></div>
+    <p id="confirmMessage"></p>
+    <div class="modal-field" id="confirmPasswordField" style="display:none;">
+      <label data-i18n="confirmPasswordLabel">Введите пароль для подтверждения</label>
+      <input type="password" id="confirmPasswordInput" placeholder="••••••" onkeydown="if(event.key==='Enter')Modals.closeConfirm(true)">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="Modals.closeConfirm(false)" data-i18n="cancel">Отмена</button>
+      <button class="btn" id="confirmOkBtn" style="color:var(--red);border-color:var(--red)" onclick="Modals.closeConfirm(true)" data-i18n="confirmBtn">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- CodeMirror core -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/properties/properties.min.js"></script>
+<!-- CodeMirror addons -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/lint/lint.min.js"></script>
+
+<!-- App scripts -->
+<script src="/js/i18n.js"></script>
+<script src="/js/themes.js"></script>
+<script src="/js/state.js"></script>
+<script src="/js/toast.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/templates.js"></script>
+<script src="/js/editor.js"></script>
+<script src="/js/tabs.js"></script>
+<script src="/js/sidebar.js"></script>
+<script src="/js/rightpanel.js"></script>
+<script src="/js/modals.js"></script>
+<script src="/js/app.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  await I18N.init();
+  loadUser();
+  Themes.init();
+  I18N.refresh();
+  loadVersion();
+  checkUpdate();
+});
+
+// Language dropdown
+
+// Theme toggle icons
+window.addEventListener('i18n-change', () => {
+  const isDark = Themes.get() === 'dark';
+  document.querySelector('.theme-icon-dark').style.display = isDark ? '' : 'none';
+  document.querySelector('.theme-icon-light').style.display = isDark ? 'none' : '';
+});
+
+// Legend
+function showLegend() { document.getElementById('legendPopup').classList.add('vis'); }
+function hideLegend() { document.getElementById('legendPopup').classList.remove('vis'); }
+
+// Update lint status
+function updateLintStatus() {
+  const errors = document.querySelectorAll('.CodeMirror-lint-marker-error').length;
+  const warnings = document.querySelectorAll('.CodeMirror-lint-marker-warning').length;
+  const el = document.getElementById('statusLint');
+  if (!el) return;
+  if (errors > 0) {
+    el.className = 'statusbar-item err';
+    const label = errors === 1 ? I18N.t('lintErrors').split('|')[0] : I18N.t('lintErrors').split('|')[1];
+    el.textContent = `✕ ${errors} ${label}`;
+  } else if (warnings > 0) {
+    el.className = 'statusbar-item warn';
+    el.textContent = `⚠ ${warnings} ${I18N.t('lintWarnings')}`;
+  } else {
+    el.className = 'statusbar-item';
+    el.textContent = '';
+  }
+}
+setInterval(updateLintStatus, 800);
+
+// Right panel resize
+(function() {
+  const app = document.querySelector('.app');
+  const resizer = document.getElementById('rightResizer');
+  if (!resizer || !app) return;
+  let isResizing = false;
+
+  resizer.addEventListener('mousedown', (e) => {
+    isResizing = true;
+    resizer.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    const startX = e.clientX;
+    const cols = getComputedStyle(app).gridTemplateColumns.split(' ');
+    const startWidth = parseInt(cols[2], 10) || 230;
+
+    function onMove(ev) {
+      if (!isResizing) return;
+      const delta = startX - ev.clientX;
+      const newWidth = Math.max(180, Math.min(600, startWidth + delta));
+      app.style.gridTemplateColumns = `260px 1fr ${newWidth}px`;
+    }
+    function onUp() {
+      isResizing = false;
+      resizer.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      const cols = getComputedStyle(app).gridTemplateColumns.split(' ');
+      localStorage.setItem('rpWidth', parseInt(cols[2], 10));
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  const saved = localStorage.getItem('rpWidth');
+  if (saved) app.style.gridTemplateColumns = `260px 1fr ${saved}px`;
+})();
+
+async function loadVersion() {
+  try {
+    const r = await fetch('/api/version', { cache: 'no-store' });
+    if (!r.ok) return;
+    const d = await r.json();
+    const gh = document.querySelector('a[href*="github.com"]');
+    if (gh && d.version) gh.setAttribute('data-tooltip', 'Kompoz v' + d.version);
+  } catch {}
+}
+
+async function checkUpdate() {
+  try {
+    const [vr, lr] = await Promise.all([
+      fetch('/api/version', { cache: 'no-store' }),
+      fetch('/api/latest-release', { cache: 'no-store' })
+    ]);
+    if (!vr.ok || !lr.ok) return;
+    const v = await vr.json();
+    const l = await lr.json();
+    if (!v.version || !l.tag) return;
+    const cur = v.version.replace(/^v/, '').split('.').map(Number);
+    const lat = l.tag.replace(/^v/, '').split('.').map(Number);
+    const newer = lat[0]>cur[0] || (lat[0]===cur[0] && lat[1]>cur[1]) || (lat[0]===cur[0] && lat[1]===cur[1] && lat[2]>cur[2]);
+    if (newer) {
+      const gh = document.querySelector('a[href*="github.com"]');
+      if (gh) {
+        gh.style.position = 'relative';
+        if (!gh.querySelector('.update-dot')) {
+          const dot = document.createElement('span');
+          dot.className = 'update-dot';
+          gh.appendChild(dot);
+        }
+        gh.setAttribute('data-tooltip', 'Kompoz v' + v.version + ' — New ' + l.tag + ' available!');
+        gh.href = l.url || 'https://github.com/John710/kompoz/releases/latest';
+      }
+    }
+  } catch {}
+}
+
+async function logout() {
+  try { await fetch('/api/logout', { method: 'POST' }); } catch {}
+  window.location.href = '/login.html';
+}
+
+
+async function loadUser() {
+  try {
+    const r = await fetch('/api/me', { cache: 'no-store' });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d.enabled && d.user) {
+      const el = document.getElementById('profileName');
+      if (el) el.textContent = d.user.name;
+      const av = document.getElementById('profileAvatar');
+      if (av) {
+        if (d.user.avatar) {
+          av.style.display = '';
+          av.innerHTML = `<img src="${d.user.avatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;">`;
+        } else {
+          av.style.display = 'none';
+        }
+      }
+    }
+  } catch {}
+}
+
+function toggleProfileDropdown() {
+  const existing = document.getElementById('profileDropdown');
+  if (existing) { existing.remove(); return; }
+
+  const btn = document.getElementById('profileBlock');
+  if (!btn) return;
+  const rect = btn.getBoundingClientRect();
+
+  const html = `<div class="proj-dropdown-item" onclick="logout();document.getElementById('profileDropdown')?.remove()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+    Logout
+  </div>`;
+
+  const dd = document.createElement('div');
+  dd.id = 'profileDropdown';
+  dd.className = 'proj-dropdown';
+  dd.style.top = (rect.bottom + 4) + 'px';
+  const ddWidth = Math.max(rect.width, 140);
+  dd.style.width = ddWidth + 'px';
+  if (rect.left + ddWidth > window.innerWidth - 8) {
+    dd.style.left = 'auto';
+    dd.style.right = (window.innerWidth - rect.right) + 'px';
+  } else {
+    dd.style.left = rect.left + 'px';
+    dd.style.right = 'auto';
+  }
+  dd.innerHTML = html;
+  document.body.appendChild(dd);
+
+  setTimeout(() => {
+    document.addEventListener('click', function h(e) {
+      if (!dd.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+        dd.remove(); document.removeEventListener('click', h);
+      }
+    });
+  }, 0);
+}
+
+</script>
+</body></html>

@@ -1,0 +1,66 @@
+services:
+  kompoz:
+    image: ghcr.io/John710/kompoz:latest
+    container_name: kompoz
+    restart: unless-stopped
+    networks:
+      - home-network
+    ports:
+      - "3210:3000"
+    volumes:
+      # Direct-mode: the folder itself is a project.
+      # Name in UI = basename of mount point (e.g. "docker" for /mnt/docker).
+      # Works if it contains .env, compose/ folder, or at least one .yml file.
+      - /path/to/your/docker:/mnt/docker
+
+      # Direct-mode: /path/to/your/server becomes project "server"
+      # (basename of /mnt/server = "server").
+      - /path/to/your/server:/mnt/server
+
+      # Example: multi-mode folder.
+      # If /mnt/projects contains no .env/compose/*.yml,
+      # then EACH subfolder inside /mnt/projects is treated as a separate project.
+      # - /path/to/your/projects:/mnt/projects
+
+    environment:
+      # Comma-separated list of mount points INSIDE the container.
+      # Separator is COMMA (previously colon).
+      #
+      # You can override a direct-mode project name with "|":
+      #   COMPOSE_MOUNTS=/mnt/docker|my-stack,/mnt/server|docker2
+      # In this example:
+      #   /mnt/docker      → project "my-stack" (instead of "docker")
+      #   /mnt/server      → project "docker2"  (instead of "server")
+      #
+      # Without "|" the name is taken from the basename of the mount point.
+      - COMPOSE_MOUNTS=/mnt/docker,/mnt/server
+      - TZ=UTC
+
+      # Optional: enable login/password authentication.
+      # If both are set, all pages and API endpoints require authentication.
+      # Leave empty to disable auth (default).
+      - AUTH_USER=
+      - AUTH_PASS=
+      # Optional: secret key for signing auth cookies.
+      # Generate with: openssl rand -hex 32
+      # If not set, a random secret is generated on each container restart.
+      # - AUTH_SECRET=your-generated-secret-here
+
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/info"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 64M
+
+networks:
+  home-network:

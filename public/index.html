@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="appTitle">Kompoz</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b8cff' stroke-width='2'><rect x='2' y='3' width='20' height='14' rx='2'/><path d='m8 21 8 0M12 17v4'/><path d='m7 8 2 2-2 2M11 12h4'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#0d1117; --bg2:#161b22; --bg3:#21262d; --bg4:#222736;
+  --text:#c9d1d9; --text2:#8b949e; --text3:#6e7681;
+  --border:#30363d; --accent:#58a6ff; --accent2:#1f6feb;
+  --green:#3fb950; --red:#f85149; --yellow:#ffd95b;
+  --root-tag:#ff9d5c; --comp-tag:#5b8cff;
+  --mono:'JetBrains Mono',monospace; --display:'Inter',sans-serif;
+}
+html,body { height:100%; background:var(--bg); color:var(--text); font-family:var(--display); }
+
+/* Header */
+.header { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 24px; height:56px; background:var(--bg2); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10; }
+.header-logo { display:flex; align-items:center; gap:8px; font-size:15px; font-weight:800; color:var(--text); }
+.header-logo svg { color:var(--accent); }
+.header-actions { display:flex; gap:8px; align-items:center; }
+.header-icon-btn { display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text2); cursor:pointer; transition:all .15s; }
+.header-icon-btn:hover { background:var(--bg3); color:var(--text); }
+
+/* Main */
+.main { max-width:1100px; margin:0 auto; padding:40px 24px; }
+.main-title { font-size:28px; font-weight:800; margin-bottom:8px; }
+.main-subtitle { font-size:13px; color:var(--text2); font-family:var(--mono); margin-bottom:32px; }
+
+/* Grid */
+.projects-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:16px; }
+
+/* Project card */
+.proj-card {
+  background:var(--bg2); border:1px solid var(--border); border-radius:12px;
+  padding:20px; cursor:pointer; transition:all .15s;
+  display:flex; flex-direction:column; gap:10px; position:relative; overflow:hidden;
+}
+.proj-card:hover { background:var(--bg3); border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), 0 8px 24px rgba(0,0,0,.3); }
+
+.proj-card-name { font-size:16px; font-weight:700; color:var(--text); word-break:break-word; }
+.proj-card-meta { display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:11px; color:var(--text3); }
+.proj-card-meta svg { color:var(--text3); }
+.proj-card-badge {
+  font-size:9px; padding:2px 6px; border-radius:4px;
+  background:rgba(61,255,160,.12); color:var(--green); font-family:var(--mono);
+  align-self:flex-start;
+}
+
+/* New project card */
+.proj-card-new {
+  background:transparent; border:2px dashed var(--border); border-radius:12px;
+  padding:20px; cursor:pointer; transition:all .15s;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:10px; min-height:120px; color:var(--text3);
+}
+.proj-card-new:hover { border-color:var(--accent); color:var(--accent); background:rgba(88,166,255,.05); }
+.proj-card-new .plus { font-size:32px; font-weight:300; line-height:1; }
+.proj-card-new .label { font-size:13px; font-weight:600; }
+
+/* Modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:100; opacity:0; pointer-events:none; transition:opacity .2s; }
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal {
+  background:var(--bg2); border:1px solid var(--border); border-radius:12px;
+  width:100%; max-width:400px; padding:24px; box-shadow:0 16px 48px rgba(0,0,0,.5);
+}
+.modal h3 { font-size:16px; margin-bottom:16px; }
+.modal-field { margin-bottom:14px; }
+.modal-field label { display:block; font-size:11px; font-family:var(--mono); color:var(--text3); margin-bottom:6px; }
+.modal-field input {
+  width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border);
+  background:var(--bg); color:var(--text); font-family:var(--mono); font-size:13px;
+  outline:none; transition:border .15s;
+}
+.modal-field input:focus { border-color:var(--accent); }
+.modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
+.btn { display:inline-flex; align-items:center; gap:5px; padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text2); font-family:var(--display); font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; }
+.btn:hover { background:var(--bg3); color:var(--text); }
+.btn-primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+.btn-primary:hover { background:var(--accent2); border-color:var(--accent2); }
+
+/* Empty state */
+.empty-state { text-align:center; padding:60px 20px; color:var(--text3); }
+.empty-state svg { color:var(--text3); margin-bottom:16px; }
+.empty-state h3 { color:var(--text2); font-size:16px; margin-bottom:8px; }
+.empty-state p { font-family:var(--mono); font-size:12px; }
+
+/* Toast */
+.toast-container { position:fixed; top:16px; right:16px; z-index:200; display:flex; flex-direction:column; gap:8px; }
+.toast { padding:10px 14px; border-radius:8px; font-family:var(--mono); font-size:12px; color:#fff; box-shadow:0 4px 16px rgba(0,0,0,.4); animation:slideIn .2s ease; }
+.toast.error { background:var(--red); }
+.toast.success { background:var(--green); }
+.toast.info { background:var(--accent); }
+@keyframes slideIn { from { opacity:0; transform:translateX(20px); } }
+
+/* Dropdown */
+.proj-dropdown { position:fixed; z-index:200; background:var(--bg3); border:1px solid var(--border); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.4); overflow:hidden; animation:fadeDown .15s ease; }
+@keyframes fadeDown { from { opacity:0; transform:translateY(-4px); } }
+.proj-dropdown-item { display:flex; align-items:center; gap:8px; padding:9px 12px; cursor:pointer; font-family:var(--mono); font-size:12px; color:var(--text2); transition:background .1s; }
+.proj-dropdown-item:hover { background:var(--bg4); color:var(--text); }
+.proj-dropdown-item.active { color:var(--accent); }
+
+/* Tooltip */
+[data-tooltip] { position: relative; }
+[data-tooltip]::before,
+[data-tooltip]::after {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .1s;
+}
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  top: calc(100% + 6px);
+  padding: 6px 10px;
+  background: var(--bg3);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  border-radius: 6px;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0,0,0,.3);
+  z-index: 1000;
+}
+[data-tooltip]::before {
+  content: '';
+  top: calc(100% + 1px);
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent var(--border) transparent;
+}
+[data-tooltip]:hover::before,
+[data-tooltip]:hover::after {
+  opacity: 1;
+}
+
+/* Profile */
+.header-profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .15s;
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 600;
+}
+.header-profile:hover { background: var(--bg3); color: var(--text); }
+.profile-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+}
+.profile-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.profile-chevron { color: var(--text3); transition: transform .15s; }
+.header-profile:hover .profile-chevron { transform: rotate(180deg); }
+.update-dot { position:absolute; top:-2px; right:-2px; width:8px; height:8px; background:#ff5b5b; border-radius:50%; animation:pulse 1.5s infinite; box-shadow:0 0 0 0 rgba(255,91,91,.7); }
+@keyframes pulse { 0%{transform:scale(.95);box-shadow:0 0 0 0 rgba(255,91,91,.7)} 70%{transform:scale(1);box-shadow:0 0 0 6px rgba(255,91,91,0)} 100%{transform:scale(.95);box-shadow:0 0 0 0 rgba(255,91,91,0)} }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="2" y="3" width="20" height="14" rx="2"/>
+      <path d="m8 21 8 0M12 17v4"/>
+      <path d="m7 8 2 2-2 2M11 12h4"/>
+    </svg>
+    <span data-i18n="appTitle">Kompoz</span>
+  </div>
+    <div class="header-actions">
+    <div class="header-icon-btn" id="langBtn" onclick="toggleLangDropdown()" data-tooltip="Language">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+      </svg>
+    </div>
+    <div class="header-icon-btn" id="themeBtn" onclick="Themes.toggle()" data-tooltip="Theme">
+      <svg class="theme-icon-dark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+      <svg class="theme-icon-light" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+    </div>
+    <a class="header-icon-btn" href="https://github.com" target="_blank" rel="noopener" data-tooltip="GitHub">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+      </svg>
+    </a>
+    <div class="header-profile" id="profileBlock" onclick="toggleProfileDropdown()">
+      <div class="profile-avatar" id="profileAvatar">U</div>
+      <span class="profile-name" id="profileName">User</span>
+      <svg class="profile-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+  <h1 class="main-title" data-i18n="selectProject">Выберите проект</h1>
+  <p class="main-subtitle" id="projectCount">Загрузка...</p>
+
+  <div class="projects-grid" id="projectsGrid">
+    <!-- Cards injected here -->
+  </div>
+</main>
+
+<!-- New Project Modal -->
+<div class="modal-overlay" id="newProjectModal">
+  <div class="modal">
+    <h3 data-i18n="newProjectTitle">Новый проект</h3>
+    <div class="modal-field">
+      <label data-i18n="projectNameLabel">Название (латиница, цифры, _ -)</label>
+      <input type="text" id="newProjectName" placeholder="my-project" onkeydown="if(event.key==='Enter')submitNewProject()">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()" data-i18n="cancel">Отмена</button>
+      <button class="btn btn-primary" onclick="submitNewProject()" data-i18n="create">Создать</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="/js/themes.js"></script>
+<script src="/js/i18n.js"></script>
+<script>
+let projects = [];
+let canCreate = false;
+
+async function loadProjects() {
+  try {
+    const r = await fetch('/api/projects', { cache: 'no-store' });
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    projects = d.projects || [];
+    canCreate = d.canCreate || false;
+    renderProjects();
+  } catch(e) {
+    showToast(I18N.t('errorLoadProjects') + ': ' + e.message, 'error');
+    document.getElementById('projectCount').textContent = '—';
+  }
+}
+
+function renderProjects() {
+  const grid = document.getElementById('projectsGrid');
+  const countEl = document.getElementById('projectCount');
+
+  if (!projects.length) {
+    countEl.textContent = I18N.t('noProjects') || 'Нет проектов';
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+        </svg>
+        <h3 data-i18n="noProjectsTitle">Нет проектов</h3>
+        <p data-i18n="noProjectsHint">Создайте первый проект, чтобы начать</p>
+      </div>
+    `;
+    I18N.refresh();
+    return;
+  }
+
+  countEl.textContent = `${projects.length} ${I18N.t('projectCountLabel') || 'проектов'}`;
+
+  let html = '';
+  projects.forEach(p => {
+    const badge = p.direct ? `<span class="proj-card-badge">direct</span>` : '';
+    html += `
+      <div class="proj-card" onclick="openProject('${escapeHtml(p.name)}')">
+        <div class="proj-card-name">${escapeHtml(p.name)}</div>
+        ${badge}
+        <div class="proj-card-meta">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <span>${p.fileCount || 0} ${I18N.t('fileCount')}</span>
+        </div>
+      </div>
+    `;
+  });
+
+  if (canCreate) {
+    html += `
+      <div class="proj-card-new" onclick="openNewProjectModal()">
+        <div class="plus">+</div>
+        <div class="label" data-i18n="newProjectTitle">Новый проект</div>
+      </div>
+    `;
+  }
+
+  grid.innerHTML = html;
+  I18N.refresh();
+}
+
+function openProject(name) {
+  window.location.href = `/editor.html?project=${encodeURIComponent(name)}`;
+}
+
+function openNewProjectModal() {
+  document.getElementById('newProjectModal').classList.add('open');
+  setTimeout(() => document.getElementById('newProjectName').focus(), 50);
+}
+
+function closeModal() {
+  document.getElementById('newProjectModal').classList.remove('open');
+  document.getElementById('newProjectName').value = '';
+}
+
+async function submitNewProject() {
+  const name = document.getElementById('newProjectName').value.trim();
+  if (!name) { showToast(I18N.t('enterProjectName'), 'error'); return; }
+  try {
+    const r = await fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    const d = await r.json();
+    if (d.error) throw new Error(d.errorKey ? I18N.t(d.errorKey) : d.error);
+    showToast(I18N.t('projectCreated'), 'success');
+    closeModal();
+    await loadProjects();
+    // Auto-open new project
+    setTimeout(() => openProject(name), 300);
+  } catch(e) {
+    showToast(I18N.t('errorDelete') + ': ' + e.message, 'error');
+  }
+}
+
+function showToast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+
+window.addEventListener('i18n-change', () => {
+  I18N.refresh();
+  renderProjects();
+});
+
+window.addEventListener('i18n-change', () => {
+  const isDark = Themes.get() === 'dark';
+  document.querySelector('.theme-icon-dark').style.display = isDark ? '' : 'none';
+  document.querySelector('.theme-icon-light').style.display = isDark ? 'none' : '';
+});
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await I18N.init();
+  loadUser();
+  Themes.init();
+  I18N.refresh();
+  loadProjects();
+  loadVersion();
+  checkUpdate();
+});
+
+async function loadVersion() {
+  try {
+    const r = await fetch('/api/version', { cache: 'no-store' });
+    if (!r.ok) return;
+    const d = await r.json();
+    const gh = document.querySelector('a[href*="github.com"]');
+    if (gh && d.version) gh.setAttribute('data-tooltip', 'Kompoz v' + d.version);
+  } catch {}
+}
+
+async function checkUpdate() {
+  try {
+    const [vr, lr] = await Promise.all([
+      fetch('/api/version', { cache: 'no-store' }),
+      fetch('/api/latest-release', { cache: 'no-store' })
+    ]);
+    if (!vr.ok || !lr.ok) return;
+    const v = await vr.json();
+    const l = await lr.json();
+    if (!v.version || !l.tag) return;
+    const cur = v.version.replace(/^v/, '').split('.').map(Number);
+    const lat = l.tag.replace(/^v/, '').split('.').map(Number);
+    const newer = lat[0]>cur[0] || (lat[0]===cur[0] && lat[1]>cur[1]) || (lat[0]===cur[0] && lat[1]===cur[1] && lat[2]>cur[2]);
+    if (newer) {
+      const gh = document.querySelector('a[href*="github.com"]');
+      if (gh) {
+        gh.style.position = 'relative';
+        if (!gh.querySelector('.update-dot')) {
+          const dot = document.createElement('span');
+          dot.className = 'update-dot';
+          gh.appendChild(dot);
+        }
+        gh.setAttribute('data-tooltip', 'Kompoz v' + v.version + ' — New ' + l.tag + ' available!');
+        gh.href = l.url || 'https://github.com/John710/kompoz/releases/latest';
+      }
+    }
+  } catch {}
+}
+
+async function logout() {
+  try { await fetch('/api/logout', { method: 'POST' }); } catch {}
+  window.location.href = '/login.html';
+}
+
+
+async function loadUser() {
+  try {
+    const r = await fetch('/api/me', { cache: 'no-store' });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d.enabled && d.user) {
+      const el = document.getElementById('profileName');
+      if (el) el.textContent = d.user.name;
+      const av = document.getElementById('profileAvatar');
+      if (av) {
+        if (d.user.avatar) {
+          av.style.display = '';
+          av.innerHTML = `<img src="${d.user.avatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;">`;
+        } else {
+          av.style.display = 'none';
+        }
+      }
+    }
+  } catch {}
+}
+
+function toggleProfileDropdown() {
+  const existing = document.getElementById('profileDropdown');
+  if (existing) { existing.remove(); return; }
+
+  const btn = document.getElementById('profileBlock');
+  if (!btn) return;
+  const rect = btn.getBoundingClientRect();
+
+  const html = `<div class="proj-dropdown-item" onclick="logout();document.getElementById('profileDropdown')?.remove()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+    Logout
+  </div>`;
+
+  const dd = document.createElement('div');
+  dd.id = 'profileDropdown';
+  dd.className = 'proj-dropdown';
+  dd.style.top = (rect.bottom + 4) + 'px';
+  const ddWidth = Math.max(rect.width, 140);
+  dd.style.width = ddWidth + 'px';
+  if (rect.left + ddWidth > window.innerWidth - 8) {
+    dd.style.left = 'auto';
+    dd.style.right = (window.innerWidth - rect.right) + 'px';
+  } else {
+    dd.style.left = rect.left + 'px';
+    dd.style.right = 'auto';
+  }
+  dd.innerHTML = html;
+  document.body.appendChild(dd);
+
+  setTimeout(() => {
+    document.addEventListener('click', function h(e) {
+      if (!dd.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+        dd.remove(); document.removeEventListener('click', h);
+      }
+    });
+  }, 0);
+}
+
+</script>
+</body>
+</html>

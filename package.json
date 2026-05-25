@@ -5,8 +5,7 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "test": "node --test test/*.test.js",
-    "release": "bash scripts/release.sh"
+    "test": "node --test test/*.test.js"
   },
   "keywords": [
     "docker",

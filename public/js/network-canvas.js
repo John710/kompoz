@@ -10,9 +10,20 @@ const NetworkCanvas = (() => {
   let tool = 'pan';
   let nodes = [], edges = [];
   let selectedNodeId = null;
-  let linkSourceId = null;
   let callbacks = {};
+  let gridVisible = true;
   const NODE_W = 160, NODE_H = 64;
+
+  const tempLineGroup = container.append('g').attr('class', 'temp-line').style('display', 'none');
+  let linkDragState = null;
+
+  const EDGE_STYLES = {
+    ethernet:  { dash: '0',    color: 'var(--text3)', width: 1.5 },
+    wifi:      { dash: '4,3',  color: 'var(--accent)', width: 1.5 },
+    vpn:       { dash: '8,4',  color: 'var(--purple)', width: 2 },
+    docker:    { dash: '2,2',  color: 'var(--green)', width: 1.5 },
+    lxc:       { dash: '6,3,2,3', color: 'var(--yellow)', width: 1.5 },
+  };
 
   function init(cb) {
     callbacks = cb || {};
@@ -32,7 +43,7 @@ const NetworkCanvas = (() => {
     svg.on('click', (e) => {
       if (e.target.id === 'networkSvg') {
         selectNode(null);
-        if (tool === 'link') cancelLink();
+        hideTooltip();
       }
     });
 
@@ -48,7 +59,12 @@ const NetworkCanvas = (() => {
   function setTool(t) {
     tool = t;
     svg.style('cursor', tool === 'pan' ? 'grab' : 'default');
-    if (tool !== 'link') cancelLink();
+  }
+
+  function toggleGrid() {
+    gridVisible = !gridVisible;
+    gridGroup.style('display', gridVisible ? 'block' : 'none');
+    return gridVisible;
   }
 
   function drawGrid() {
@@ -88,7 +104,10 @@ const NetworkCanvas = (() => {
       .attr('x1', d => (getNode(d.source_id)?.x || 0) + NODE_W / 2)
       .attr('y1', d => (getNode(d.source_id)?.y || 0) + NODE_H / 2)
       .attr('x2', d => (getNode(d.target_id)?.x || 0) + NODE_W / 2)
-      .attr('y2', d => (getNode(d.target_id)?.y || 0) + NODE_H / 2);
+      .attr('y2', d => (getNode(d.target_id)?.y || 0) + NODE_H / 2)
+      .attr('stroke-dasharray', d => EDGE_STYLES[d.type]?.dash || '0')
+      .attr('stroke', d => EDGE_STYLES[d.type]?.color || 'var(--text3)')
+      .attr('stroke-width', d => EDGE_STYLES[d.type]?.width || 1.5);
     linkMerge.select('.edge-label')
       .attr('x', d => {
         const sx = (getNode(d.source_id)?.x || 0) + NODE_W / 2;
@@ -100,7 +119,7 @@ const NetworkCanvas = (() => {
         const ty = (getNode(d.target_id)?.y || 0) + NODE_H / 2;
         return (sy + ty) / 2;
       })
-      .text(d => d.label || '');
+      .text(d => d.label || d.type || '');
   }
 
   function renderNodes() {
@@ -108,16 +127,10 @@ const NetworkCanvas = (() => {
     node.exit().remove();
     const nodeEnter = node.enter().append('g').attr('class', 'network-node')
       .attr('transform', d => `translate(${d.x || 0},${d.y || 0})`)
+      .on('mouseenter', (e, d) => showNodeTooltip(e, d))
+      .on('mouseleave', hideTooltip)
       .on('mousedown', (e, d) => {
-        if (tool === 'select' || tool === 'link') e.stopPropagation();
-        if (tool === 'select') selectNode(d.id);
-        if (tool === 'link') {
-          if (!linkSourceId) { linkSourceId = d.id; highlightNode(d.id, true); }
-          else if (linkSourceId !== d.id) {
-            if (callbacks.onCreateLink) callbacks.onCreateLink(linkSourceId, d.id);
-            cancelLink();
-          }
-        }
+        if (tool === 'select') { e.stopPropagation(); selectNode(d.id); }
       })
       .on('contextmenu', (e, d) => {
         e.preventDefault();
@@ -143,6 +156,11 @@ const NetworkCanvas = (() => {
     const card = nodeEnter.append('g').attr('class', 'node-card');
     card.append('rect').attr('width', NODE_W).attr('height', NODE_H).attr('rx', 8)
       .attr('fill', 'var(--panel)').attr('stroke', 'var(--border)').attr('stroke-width', 1);
+    // Pulse ring for online devices
+    card.append('circle').attr('class', 'pulse-ring')
+      .attr('cx', NODE_W - 12).attr('cy', 12).attr('r', 6)
+      .attr('fill', 'none').attr('stroke', d => d.online ? 'var(--green)' : 'none')
+      .attr('stroke-width', 1).attr('opacity', 0.6);
     card.append('rect').attr('width', 4).attr('height', NODE_H).attr('rx', 2)
       .attr('fill', d => d.online ? 'var(--green)' : 'var(--red)');
     card.append('svg:foreignObject').attr('x', 12).attr('y', 16).attr('width', 32).attr('height', 32)
@@ -152,13 +170,80 @@ const NetworkCanvas = (() => {
       .attr('fill', 'var(--text)').attr('font-size', '13px').attr('font-weight', '600')
       .text(d => d.name || d.ip || 'Unknown');
     card.append('text').attr('x', 52).attr('y', 44).attr('class', 'node-ip')
-      .attr('fill', 'var(--muted)').attr('font-size', '11px').attr('font-family', 'JetBrains Mono, monospace')
+      .attr('fill', 'var(--text2)').attr('font-size', '11px').attr('font-family', 'JetBrains Mono, monospace')
       .text(d => d.ip || '');
     card.append('circle').attr('cx', NODE_W - 12).attr('cy', 12).attr('r', 4)
       .attr('fill', d => d.online ? 'var(--green)' : 'var(--red)')
       .attr('stroke', 'var(--panel)').attr('stroke-width', 2);
 
-    nodeEnter.merge(node).attr('class', d => 'network-node' + (d.id === selectedNodeId ? ' selected' : ''));
+    // Anchor points for link creation
+    const anchors = card.append('g').attr('class', 'node-anchors');
+    const anchorPositions = [
+      { pos: 'top', cx: NODE_W / 2, cy: 0 },
+      { pos: 'right', cx: NODE_W, cy: NODE_H / 2 },
+      { pos: 'bottom', cx: NODE_W / 2, cy: NODE_H },
+      { pos: 'left', cx: 0, cy: NODE_H / 2 }
+    ];
+    anchorPositions.forEach(a => {
+      anchors.append('circle')
+        .attr('class', 'anchor')
+        .attr('cx', a.cx).attr('cy', a.cy).attr('r', 5)
+        .attr('fill', 'var(--accent)')
+        .attr('stroke', 'var(--panel)').attr('stroke-width', 1)
+        .style('opacity', 0).style('cursor', 'crosshair')
+        .on('mouseenter', function() { d3.select(this).style('opacity', 1).attr('r', 7); })
+        .on('mouseleave', function() { d3.select(this).style('opacity', 0).attr('r', 5); })
+        .on('mousedown', (e) => {
+          e.stopPropagation();
+          startLinkDrag(e, d, a);
+        });
+    });
+
+    // Show anchors on node hover
+    nodeEnter.on('mouseenter', function() {
+      d3.select(this).selectAll('.anchor').style('opacity', 0.7);
+    }).on('mouseleave', function() {
+      if (!linkDragState) d3.select(this).selectAll('.anchor').style('opacity', 0);
+    });
+
+    // Update selection state
+    nodeEnter.merge(node)
+      .attr('transform', d => `translate(${d.x || 0},${d.y || 0})`)
+      .attr('class', d => 'network-node' + (d.id === selectedNodeId ? ' selected' : ''));
+
+    // Animate pulse rings for online nodes
+    nodesGroup.selectAll('.pulse-ring')
+      .transition().duration(1500).ease(d3.easeSinInOut)
+      .attr('r', 12).attr('opacity', 0)
+      .transition().duration(0).attr('r', 6).attr('opacity', 0.6)
+      .on('end', function repeat() {
+        d3.select(this).transition().duration(1500).ease(d3.easeSinInOut)
+          .attr('r', 12).attr('opacity', 0)
+          .transition().duration(0).attr('r', 6).attr('opacity', 0.6)
+          .on('end', repeat);
+      });
+  }
+
+  function showNodeTooltip(e, d) {
+    const tt = document.getElementById('tooltip');
+    const ports = (d.ports || []).join(', ') || '—';
+    tt.innerHTML = `
+      <div style="font-weight:600;margin-bottom:4px;">${d.name || d.ip || 'Unknown'}</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text2);">
+        <div>IP: ${d.ip || '—'}</div>
+        <div>MAC: ${d.mac || '—'}</div>
+        <div>Type: ${d.device_type || 'unknown'}</div>
+        <div>Status: ${d.online ? '<span style="color:var(--green)">Online</span>' : '<span style="color:var(--red)">Offline</span>'}</div>
+        <div>Ports: ${ports}</div>
+      </div>
+    `;
+    tt.style.left = (e.pageX + 12) + 'px';
+    tt.style.top = (e.pageY + 12) + 'px';
+    tt.classList.add('visible');
+  }
+
+  function hideTooltip() {
+    document.getElementById('tooltip').classList.remove('visible');
   }
 
   function getNode(id) { return nodes.find(n => n.id === id); }
@@ -171,7 +256,6 @@ const NetworkCanvas = (() => {
     nodesGroup.selectAll('.network-node').filter(d => d.id === id)
       .select('.node-card rect:first-child').attr('stroke', on ? 'var(--accent)' : 'var(--border)');
   }
-  function cancelLink() { linkSourceId = null; highlightNode(null, false); }
 
   function zoomIn() { svg.transition().duration(200).call(d3.zoom().transform, zoomTransform.scale(1.2)); }
   function zoomOut() { svg.transition().duration(200).call(d3.zoom().transform, zoomTransform.scale(0.833)); }
@@ -187,5 +271,64 @@ const NetworkCanvas = (() => {
     svg.transition().duration(400).call(d3.zoom().transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
   }
 
-  return { init, render, setTool, selectNode, zoomIn, zoomOut, zoomFit, getNode, nodes: () => nodes, edges: () => edges };
+  function startLinkDrag(e, sourceNode, anchor) {
+    e.preventDefault();
+    linkDragState = { sourceId: sourceNode.id, sourceAnchor: anchor };
+    tempLineGroup.style('display', 'block');
+    const [sx, sy] = getAnchorScreenPos(sourceNode, anchor);
+    tempLineGroup.append('line').attr('class', 'temp-link-line')
+      .attr('x1', sx).attr('y1', sy)
+      .attr('x2', sx).attr('y2', sy)
+      .attr('stroke', 'var(--accent)').attr('stroke-width', 2)
+      .attr('stroke-dasharray', '4,2');
+    svg.on('mousemove.linkdrag', (ev) => updateLinkDrag(ev));
+    svg.on('mouseup.linkdrag', (ev) => endLinkDrag(ev));
+  }
+
+  function updateLinkDrag(e) {
+    if (!linkDragState) return;
+    const [sx, sy] = getAnchorScreenPos(getNode(linkDragState.sourceId), linkDragState.sourceAnchor);
+    const [mx, my] = d3.pointer(e, container.node());
+    tempLineGroup.select('.temp-link-line')
+      .attr('x1', sx).attr('y1', sy)
+      .attr('x2', mx).attr('y2', my);
+    // Highlight target anchors under cursor
+    nodesGroup.selectAll('.anchor').attr('r', 5);
+    const el = document.elementFromPoint(e.sourceEvent.clientX, e.sourceEvent.clientY);
+    if (el && el.classList && el.classList.contains('anchor')) {
+      d3.select(el).attr('r', 9);
+    }
+  }
+
+  function endLinkDrag(e) {
+    svg.on('mousemove.linkdrag', null).on('mouseup.linkdrag', null);
+    if (!linkDragState) return;
+    const el = document.elementFromPoint(e.sourceEvent.clientX, e.sourceEvent.clientY);
+    let targetId = null;
+    if (el && el.classList && el.classList.contains('anchor')) {
+      const nodeEl = el.closest('.network-node');
+      if (nodeEl) {
+        const d = d3.select(nodeEl).datum();
+        if (d && d.id !== linkDragState.sourceId) targetId = d.id;
+      }
+    }
+    tempLineGroup.style('display', 'none').selectAll('*').remove();
+    nodesGroup.selectAll('.anchor').style('opacity', 0).attr('r', 5);
+    if (targetId && callbacks.onCreateLink) {
+      callbacks.onCreateLink(linkDragState.sourceId, targetId);
+    }
+    linkDragState = null;
+  }
+
+  function getAnchorScreenPos(node, anchor) {
+    const nx = node.x || 0;
+    const ny = node.y || 0;
+    return [nx + anchor.cx, ny + anchor.cy];
+  }
+
+  function exportMap() {
+    return { nodes: nodes.map(n => ({ id: n.id, x: n.x, y: n.y, name: n.name, type: n.device_type })), edges };
+  }
+
+  return { init, render, setTool, selectNode, zoomIn, zoomOut, zoomFit, toggleGrid, getNode, exportMap, nodes: () => nodes, edges: () => edges };
 })();

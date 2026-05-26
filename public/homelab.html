@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title data-i18n="networkMap">Network Map</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b8cff' stroke-width='2'%3E%3Ccircle cx='12' cy='5' r='3'/%3E%3Ccircle cx='19' cy='19' r='3'/%3E%3Ccircle cx='5' cy='19' r='3'/%3E%3Cline x1='12' y1='8' x2='12' y2='14'/%3E%3Cline x1='12' y1='14' x2='19' y2='19'/%3E%3Cline x1='12' y1='14' x2='5' y2='19'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b8cff' stroke-width='2'><rect x='2' y='3' width='20' height='14' rx='2'/><path d='m8 21 8 0M12 17v4'/><path d='m7 8 2 2-2 2M11 12h4'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -107,6 +107,11 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
 .toast.error { border-left:3px solid var(--red); }
 @keyframes slideIn { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
 
+/* Anchors */
+.node-anchors { pointer-events:none; }
+.node-anchors .anchor { pointer-events:all; transition:r .15s, opacity .15s; }
+.network-node:hover .node-anchors .anchor { opacity:0.7; }
+
 /* Context menu */
 .context-menu { position:absolute; background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:4px; z-index:100; min-width:160px; box-shadow:0 8px 24px rgba(0,0,0,.4); display:none; }
 .context-menu-item { padding:6px 10px; border-radius:4px; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:8px; color:var(--text); }
@@ -192,6 +197,37 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
         </div>
       </div>
 
+      <div class="sidebar-section">
+        <div class="sidebar-section-title" data-i18n="filters">Filters</div>
+        <div class="scan-row">
+          <select class="detail-input detail-select" id="filterType" style="flex:1;">
+            <option value="all">All Types</option>
+          </select>
+          <select class="detail-input detail-select" id="filterStatus" style="flex:1;">
+            <option value="all">All Status</option>
+            <option value="online">Online</option>
+            <option value="offline">Offline</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title" data-i18n="actions">Actions</div>
+        <div class="scan-row">
+          <button class="btn btn-secondary btn-sm" id="btnExport" data-i18n="export">Export</button>
+          <button class="btn btn-secondary btn-sm" id="btnImport" data-i18n="import">Import</button>
+          <input type="file" id="importFile" accept=".json" style="display:none;">
+        </div>
+        <div class="scan-row">
+          <button class="btn btn-secondary btn-sm" id="btnToggleHistory" data-i18n="scanHistory">Scan History</button>
+        </div>
+        <div id="historyPanel" style="display:none;margin-top:8px;">
+          <div class="pending-list" id="historyList" style="max-height:150px;">
+            <div class="pending-empty">No history</div>
+          </div>
+        </div>
+      </div>
+
       <div class="sidebar-section" id="detailPanel" style="display:none;">
         <div class="sidebar-section-title" data-i18n="deviceDetails">Device Details</div>
         <div class="detail-field">
@@ -200,7 +236,7 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
         </div>
         <div class="detail-field">
           <div class="detail-label">MAC</div>
-          <input type="text" class="detail-input" id="detailMac" readonly>
+          <input type="text" class="detail-input" id="detailMac">
         </div>
         <div class="detail-field">
           <div class="detail-label" data-i18n="name">Name</div>
@@ -212,7 +248,7 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
         </div>
         <div class="detail-field" id="detailPortsRow">
           <div class="detail-label" data-i18n="ports">Ports</div>
-          <input type="text" class="detail-input" id="detailPorts" readonly>
+          <input type="text" class="detail-input" id="detailPorts">
         </div>
         <div class="scan-row" style="margin-top:8px;">
           <button class="btn btn-primary btn-sm" id="btnSaveDevice" data-i18n="save">Save</button>
@@ -226,10 +262,11 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
       <div class="mini-toolbar">
         <button id="toolPan" class="active" title="Pan"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 9l4-4 4 4M9 5v14"/></svg></button>
         <button id="toolSelect" title="Select"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg></button>
-        <button id="toolLink" title="Link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+
         <button id="btnZoomIn" title="Zoom In">+</button>
         <button id="btnZoomOut" title="Zoom Out">−</button>
         <button id="btnZoomFit" title="Fit" data-i18n="fit">Fit</button>
+        <button id="btnToggleGrid" class="active" title="Grid"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg></button>
       </div>
     </div>
   </div>
@@ -238,6 +275,24 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
 <div class="tooltip" id="tooltip"></div>
 <div class="context-menu" id="contextMenu"></div>
 <div class="toast-container" id="toastContainer"></div>
+
+<!-- Link Type Modal -->
+<div id="linkTypeModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;width:280px;box-shadow:0 16px 48px rgba(0,0,0,.5);">
+    <div style="font-weight:600;margin-bottom:12px;font-size:14px;" data-i18n="selectLinkType">Select Link Type</div>
+    <select class="detail-input detail-select" id="linkTypeSelect" style="margin-bottom:16px;">
+      <option value="ethernet">Ethernet</option>
+      <option value="wifi">Wi-Fi</option>
+      <option value="vpn">VPN</option>
+      <option value="docker">Docker Network</option>
+      <option value="lxc">LXC Bridge</option>
+    </select>
+    <div class="scan-row" style="margin-bottom:0;">
+      <button class="btn btn-secondary btn-sm" id="btnCancelLink" data-i18n="cancel">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="btnConfirmLink" data-i18n="create">Create</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script>

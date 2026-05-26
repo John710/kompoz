@@ -36,6 +36,11 @@ services:
       - COMPOSE_MOUNTS=/mnt/docker,/mnt/server
       - TZ=UTC
 
+      # PostgreSQL connection string (required for DB auth and network map features).
+      # If not set, the app falls back to file-based auth and disables network persistence.
+      # Format: postgres://user:password@host:port/database
+      - DATABASE_URL=
+
       # Optional: enable login/password authentication.
       # If both are set, all pages and API endpoints require authentication.
       # Leave empty to disable auth (default).

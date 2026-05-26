@@ -1,31 +1,33 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  // I18n
-  if (typeof initI18n === 'function') await initI18n();
-
-  // Theme
-  if (typeof applyTheme === 'function') applyTheme(localStorage.getItem('theme') || 'dark');
-
-  // User profile
+  if (typeof I18N !== 'undefined') await I18N.init();
+  if (typeof Themes !== 'undefined') Themes.init();
   if (typeof loadUser === 'function') loadUser();
 
-  // Scan progress polling
   let scanPoll = null;
+  let allMapped = [];
 
   async function api(path, opts = {}) {
-    const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...opts });
+    const isGet = !opts.method || opts.method === 'GET';
+    const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, cache: isGet ? 'no-store' : undefined, ...opts });
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   }
 
   async function loadDevices() {
     try {
-      const [mapped, pending] = await Promise.all([
-        api('/api/network/devices?status=mapped'),
+      const filters = NetworkSidebar.getFilters();
+      let url = '/api/network/devices?status=mapped';
+      if (filters.type && filters.type !== 'all') url += '&type=' + encodeURIComponent(filters.type);
+      if (filters.status && filters.status !== 'all') url += '&online=' + (filters.status === 'online');
+
+      const [mappedRes, pending] = await Promise.all([
+        api(url),
         api('/api/network/devices?status=pending')
       ]);
+      allMapped = mappedRes.devices || mappedRes;
       const links = await api('/api/network/links');
-      NetworkCanvas.render(mapped, links);
-      NetworkSidebar.setPending(pending);
+      NetworkCanvas.render(allMapped, links);
+      NetworkSidebar.setPending(pending.devices || pending);
     } catch (e) { NetworkSidebar.toast(e.message, 'error'); }
   }
 
@@ -34,13 +36,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     scanPoll = setInterval(async () => {
       try {
         const st = await api('/api/network/scan-status');
-        NetworkSidebar.setScanProgress(st.scanned || 0, st.total || 0);
-        if (st.status === 'idle') {
+        NetworkSidebar.setScanProgress(st.done || 0, st.total || 0);
+        if (!st.running) {
           clearInterval(scanPoll); scanPoll = null;
           loadDevices();
         }
       } catch (e) { clearInterval(scanPoll); scanPoll = null; }
     }, 1000);
+  }
+
+  function showLinkTypeModal(sourceId, targetId) {
+    const modal = document.getElementById('linkTypeModal');
+    const select = document.getElementById('linkTypeSelect');
+    modal.style.display = 'flex';
+    select.value = 'ethernet';
+    document.getElementById('btnConfirmLink').onclick = async () => {
+      modal.style.display = 'none';
+      try {
+        await api('/api/network/links', {
+          method: 'POST',
+          body: JSON.stringify({ source_id: sourceId, target_id: targetId, type: select.value, label: select.value })
+        });
+        loadDevices();
+        NetworkSidebar.toast('Link created');
+      } catch (e) { NetworkSidebar.toast(e.message, 'error'); }
+    };
+    document.getElementById('btnCancelLink').onclick = () => { modal.style.display = 'none'; };
   }
 
   NetworkSidebar.init({
@@ -56,10 +77,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       catch (e) { NetworkSidebar.toast(e.message, 'error'); }
     },
     onClearPending: async () => {
-      // Simple approach: delete all pending one by one
       try {
         const pending = await api('/api/network/devices?status=pending');
-        await Promise.all(pending.map(d => api(`/api/network/devices/${d.id}`, { method: 'DELETE' })));
+        const list = pending.devices || pending;
+        await Promise.all(list.map(d => api(`/api/network/devices/${d.id}`, { method: 'DELETE' })));
         loadDevices();
         NetworkSidebar.toast('Pending cleared');
       } catch (e) { NetworkSidebar.toast(e.message, 'error'); }
@@ -86,6 +107,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     onDeleteDevice: async (id) => {
       try { await api(`/api/network/devices/${id}`, { method: 'DELETE' }); loadDevices(); NetworkSidebar.showDetail(null); NetworkSidebar.toast('Deleted'); }
       catch (e) { NetworkSidebar.toast(e.message, 'error'); }
+    },
+    onExport: () => {
+      const data = NetworkCanvas.exportMap();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'network-map.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      NetworkSidebar.toast('Map exported');
+    },
+    onImport: async (data) => {
+      try {
+        if (!data.nodes || !Array.isArray(data.nodes)) throw new Error('Invalid format');
+        for (const n of data.nodes) {
+          await api('/api/network/devices', { method: 'POST', body: JSON.stringify({
+            id: n.id, x: n.x, y: n.y, name: n.name, device_type: n.type, status: 'mapped'
+          }) });
+        }
+        if (data.edges) {
+          for (const e of data.edges) {
+            await api('/api/network/links', { method: 'POST', body: JSON.stringify(e) });
+          }
+        }
+        loadDevices();
+        NetworkSidebar.toast('Map imported');
+      } catch (e) { NetworkSidebar.toast(e.message, 'error'); }
+    },
+    onFilter: () => { loadDevices(); },
+    onLoadHistory: async () => {
+      try {
+        const res = await api('/api/network/scan-history');
+        NetworkSidebar.setHistory(res.history || []);
+      } catch (e) { NetworkSidebar.toast(e.message, 'error'); }
     }
   });
 
@@ -95,12 +151,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       try { await api('/api/network/devices', { method: 'POST', body: JSON.stringify({ id: node.id, x: node.x, y: node.y }) }); }
       catch (e) { console.error(e); }
     },
-    onCreateLink: async (sourceId, targetId) => {
-      try {
-        await api('/api/network/links', { method: 'POST', body: JSON.stringify({ source_id: sourceId, target_id: targetId, type: 'ethernet' }) });
-        loadDevices();
-        NetworkSidebar.toast('Link created');
-      } catch (e) { NetworkSidebar.toast(e.message, 'error'); }
+    onCreateLink: (sourceId, targetId) => {
+      showLinkTypeModal(sourceId, targetId);
     },
     onContextMenu: (e, node) => {
       const menu = document.getElementById('contextMenu');
@@ -118,7 +170,11 @@ document.addEventListener('DOMContentLoaded', async () => {
           const action = el.dataset.action;
           menu.style.display = 'none';
           if (action === 'edit') NetworkSidebar.showDetail(node);
-          if (action === 'delete') NetworkSidebar.init({}).onDeleteDevice(node.id);
+          if (action === 'delete') {
+            api(`/api/network/devices/${node.id}`, { method: 'DELETE' })
+              .then(() => { loadDevices(); NetworkSidebar.showDetail(null); NetworkSidebar.toast('Deleted'); })
+              .catch(err => NetworkSidebar.toast(err.message, 'error'));
+          }
           if (action === 'link') { NetworkCanvas.setTool('link'); NetworkCanvas.selectNode(node.id); }
         });
       });
@@ -136,14 +192,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('.mini-toolbar button').forEach(b => b.classList.remove('active'));
     document.getElementById('toolSelect').classList.add('active');
   });
-  document.getElementById('toolLink').addEventListener('click', () => {
-    NetworkCanvas.setTool('link');
-    document.querySelectorAll('.mini-toolbar button').forEach(b => b.classList.remove('active'));
-    document.getElementById('toolLink').classList.add('active');
-  });
+
   document.getElementById('btnZoomIn').addEventListener('click', () => NetworkCanvas.zoomIn());
   document.getElementById('btnZoomOut').addEventListener('click', () => NetworkCanvas.zoomOut());
   document.getElementById('btnZoomFit').addEventListener('click', () => NetworkCanvas.zoomFit());
+  document.getElementById('btnToggleGrid').addEventListener('click', () => {
+    const on = NetworkCanvas.toggleGrid();
+    document.getElementById('btnToggleGrid').classList.toggle('active', on);
+  });
 
   // Hide context menu on click elsewhere
   document.addEventListener('click', (e) => {

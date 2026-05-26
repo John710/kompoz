@@ -99,6 +99,18 @@ async function scanIp(ip) {
   return { ip, online: alive, ports: [] };
 }
 
+async function getHostnames(ips) {
+  const map = {};
+  for (const ip of ips) {
+    try {
+      const { stdout } = await execAsync(`getent hosts ${ip} || true`, { timeout: 2000 });
+      const match = stdout.match(/([a-zA-Z0-9][-a-zA-Z0-9]*\.)+[a-zA-Z]+/);
+      if (match) map[ip] = match[0].split(".")[0];
+    } catch { /* ignore */ }
+  }
+  return map;
+}
+
 async function getArpTable() {
   try {
     const { stdout } = await execAsync('ip neigh show');
@@ -154,16 +166,18 @@ async function scanCidr(cidr) {
 
   // Get MAC addresses from ARP table
   const arpTable = await getArpTable();
+  const hostnames = await getHostnames(found.map(d => d.ip));
 
   // Save found devices to DB (if not already exists)
   for (const device of found) {
     const mac = arpTable[device.ip] || null;
+        const name = hostnames[device.ip] || '';
     try {
       const { rows } = await db.query('SELECT id FROM network_devices WHERE ip = $1', [device.ip]);
       if (rows.length === 0) {
         await db.query(
-          'INSERT INTO network_devices (ip, mac, type, status, ports) VALUES ($1, $2, $3, $4, $5)',
-          [device.ip, mac, 'unknown', 'pending', device.ports]
+          'INSERT INTO network_devices (ip, mac, name, type, status, ports) VALUES ($1, $2, $3, $4, $5, $6)',
+          [device.ip, mac, name, 'unknown', 'pending', device.ports]
         );
       }
     } catch (err) {

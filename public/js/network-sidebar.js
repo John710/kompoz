@@ -27,14 +27,56 @@ const NetworkSidebar = (() => {
       const id = document.getElementById('detailIp').dataset.id;
       if (callbacks.onDeleteDevice) callbacks.onDeleteDevice(id);
     });
+    document.getElementById('btnExport').addEventListener('click', () => {
+      if (callbacks.onExport) callbacks.onExport();
+    });
+    document.getElementById('btnImport').addEventListener('click', () => {
+      document.getElementById('importFile').click();
+    });
+    document.getElementById('importFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          if (callbacks.onImport) callbacks.onImport(data);
+        } catch (err) { toast('Invalid JSON', 'error'); }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    });
+    document.getElementById('filterType').addEventListener('change', () => {
+      if (callbacks.onFilter) callbacks.onFilter();
+    });
+    document.getElementById('filterStatus').addEventListener('change', () => {
+      if (callbacks.onFilter) callbacks.onFilter();
+    });
+    document.getElementById('btnToggleHistory').addEventListener('click', () => {
+      const el = document.getElementById('historyPanel');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+      if (el.style.display === 'block' && callbacks.onLoadHistory) callbacks.onLoadHistory();
+    });
 
     const typeSelect = document.getElementById('detailType');
+    const filterType = document.getElementById('filterType');
     NetworkIcons.getAll().forEach(t => {
       const opt = document.createElement('option');
       opt.value = t;
       opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
       typeSelect.appendChild(opt);
+      const opt2 = document.createElement('option');
+      opt2.value = t;
+      opt2.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+      filterType.appendChild(opt2);
     });
+  }
+
+  function getFilters() {
+    return {
+      type: document.getElementById('filterType').value,
+      status: document.getElementById('filterStatus').value
+    };
   }
 
   function setScanProgress(current, total) {
@@ -101,6 +143,27 @@ const NetworkSidebar = (() => {
     document.getElementById('detailPorts').value = (device.ports || []).join(', ') || '';
   }
 
+  function setHistory(list) {
+    const container = document.getElementById('historyList');
+    if (!list || !list.length) {
+      container.innerHTML = '<div class="pending-empty">No scan history</div>';
+      return;
+    }
+    container.innerHTML = '';
+    list.forEach(h => {
+      const item = document.createElement('div');
+      item.className = 'pending-item';
+      const date = new Date(h.started_at).toLocaleString();
+      item.innerHTML = `
+        <div style="flex:1;min-width:0;">
+          <div class="ip">${h.cidr}</div>
+          <div class="mac">${date} — ${h.devices_found || 0} found</div>
+        </div>
+      `;
+      container.appendChild(item);
+    });
+  }
+
   function toast(msg, type = 'success') {
     const container = document.getElementById('toastContainer');
     const el = document.createElement('div');
@@ -110,5 +173,5 @@ const NetworkSidebar = (() => {
     setTimeout(() => el.remove(), 3000);
   }
 
-  return { init, setScanProgress, setPending, showDetail, toast };
+  return { init, setScanProgress, setPending, showDetail, setHistory, getFilters, toast };
 })();

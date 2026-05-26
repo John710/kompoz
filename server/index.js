@@ -116,6 +116,7 @@ app.use('/locales', express.static(path.join(__dirname, '../locales')));
 
 app.use('/api/projects', require('./routes/projects'));
 app.use('/api/files',    require('./routes/files'));
+app.use('/api/network',  require('./routes/network'));
 
 // POST /api/login
 app.post('/api/login', async (req, res) => {
@@ -264,8 +265,8 @@ if (require.main === module) {
     await db.initDatabase();
     await db.migrateAuth();
 
-    const statusChecker = require(./utils/status-checker);
-    statusChecker.start();
+    const statusChecker = require('./utils/status-checker');
+    if (process.env.DATABASE_URL) statusChecker.start();
 
     app.listen(PORT, () => {
       const mounts = getMountRoots();

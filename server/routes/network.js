@@ -4,13 +4,20 @@ const db = require('../utils/db');
 const { scanCidr, getScanProgress } = require('../utils/network-scanner');
 const { checkDevice, checkAll } = require('../utils/status-checker');
 
+// Guard: network features require DATABASE_URL
+router.use((req, res, next) => {
+  if (!process.env.DATABASE_URL) {
+    return res.status(503).json({ error: 'Database not configured. Set DATABASE_URL environment variable.' });
+  }
+  next();
+});
+
 // POST /api/network/scan
 router.post('/scan', async (req, res) => {
   try {
     const { cidr } = req.body || {};
     if (!cidr) return res.status(400).json({ error: 'CIDR is required' });
 
-    // Run scan in background
     scanCidr(cidr)
       .then(() => console.log('Scan completed for', cidr))
       .catch(err => console.error('Scan error:', err.message));
@@ -29,14 +36,28 @@ router.get('/scan-status', (req, res) => {
 // GET /api/network/devices
 router.get('/devices', async (req, res) => {
   try {
-    const { status } = req.query;
-    let sql = 'SELECT * FROM network_devices';
+    const { status, type, online } = req.query;
+    const conditions = [];
     const params = [];
+    let idx = 1;
+
     if (status) {
-      sql += ' WHERE status = $1';
+      conditions.push(`status = $${idx++}`);
       params.push(status);
     }
+    if (type) {
+      conditions.push(`type = $${idx++}`);
+      params.push(type);
+    }
+    if (online !== undefined) {
+      conditions.push(`online = $${idx++}`);
+      params.push(online === 'true');
+    }
+
+    let sql = 'SELECT * FROM network_devices';
+    if (conditions.length) sql += ' WHERE ' + conditions.join(' AND ');
     sql += ' ORDER BY created_at DESC';
+
     const { rows } = await db.query(sql, params);
     res.json({ devices: rows });
   } catch (err) {
@@ -49,14 +70,13 @@ router.post('/devices', async (req, res) => {
   try {
     const d = req.body || {};
     if (d.id) {
-      // Update existing
       await db.query(
         `UPDATE network_devices SET
           name = $1, type = $2, status = $3, x = $4, y = $5, notes = $6,
           check_method = $7, check_target = $8, properties = $9, updated_at = NOW()
          WHERE id = $10`,
         [
-          d.name, d.type, d.status, d.x, d.y, d.notes,
+          d.name, d.device_type || d.type, d.status, d.x, d.y, d.notes,
           d.check_method, d.check_target,
           JSON.stringify(d.properties || []),
           d.id
@@ -64,14 +84,13 @@ router.post('/devices', async (req, res) => {
       );
       res.json({ ok: true, id: d.id });
     } else {
-      // Create new
       const { rows } = await db.query(
         `INSERT INTO network_devices
           (ip, mac, name, type, status, x, y, notes, check_method, check_target, properties, ports)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          RETURNING id`,
         [
-          d.ip, d.mac || null, d.name || '', d.type || 'unknown', d.status || 'pending',
+          d.ip, d.mac || null, d.name || '', d.device_type || d.type || 'unknown', d.status || 'pending',
           d.x || 0, d.y || 0, d.notes || '',
           d.check_method || 'ping', d.check_target || null,
           JSON.stringify(d.properties || []),
@@ -88,8 +107,19 @@ router.post('/devices', async (req, res) => {
 // DELETE /api/network/devices/:id
 router.delete('/devices/:id', async (req, res) => {
   try {
+    await db.query('DELETE FROM network_links WHERE source_id = $1 OR target_id = $1', [req.params.id]);
     await db.query('DELETE FROM network_devices WHERE id = $1', [req.params.id]);
     res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/network/links
+router.get('/links', async (req, res) => {
+  try {
+    const { rows } = await db.query('SELECT * FROM network_links ORDER BY created_at DESC');
+    res.json({ links: rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -108,7 +138,7 @@ router.post('/links', async (req, res) => {
     } else {
       const { rows } = await db.query(
         'INSERT INTO network_links (source_id, target_id, type, label) VALUES ($1, $2, $3, $4) RETURNING id',
-        [d.source_id, d.target_id, d.type || 'ethernet', d.label || '']
+        [d.source_id, d.target_id, d.type || 'ethernet', d.label || d.type || '']
       );
       res.json({ ok: true, id: rows[0].id });
     }

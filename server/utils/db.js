@@ -12,6 +12,9 @@ pool.on('error', (err) => {
 });
 
 async function query(text, params) {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('Database not configured');
+  }
   const res = await pool.query(text, params);
   return res;
 }

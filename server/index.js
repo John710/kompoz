@@ -264,6 +264,9 @@ if (require.main === module) {
     await db.initDatabase();
     await db.migrateAuth();
 
+    const statusChecker = require(./utils/status-checker);
+    statusChecker.start();
+
     app.listen(PORT, () => {
       const mounts = getMountRoots();
       console.log('Kompoz v' + pkg.version + ' running on :' + PORT);

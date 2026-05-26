@@ -1,0 +1,114 @@
+const NetworkSidebar = (() => {
+  let callbacks = {};
+
+  function init(cb) {
+    callbacks = cb || {};
+    document.getElementById('btnScan').addEventListener('click', () => {
+      const cidr = document.getElementById('scanCidr').value.trim();
+      if (callbacks.onScan) callbacks.onScan(cidr);
+    });
+    document.getElementById('btnCheckStatus').addEventListener('click', () => {
+      if (callbacks.onCheckStatus) callbacks.onCheckStatus();
+    });
+    document.getElementById('btnClearPending').addEventListener('click', () => {
+      if (callbacks.onClearPending) callbacks.onClearPending();
+    });
+    document.getElementById('btnSaveDevice').addEventListener('click', () => {
+      const id = document.getElementById('detailIp').dataset.id;
+      const data = {
+        id,
+        name: document.getElementById('detailName').value.trim(),
+        device_type: document.getElementById('detailType').value,
+        status: 'mapped'
+      };
+      if (callbacks.onSaveDevice) callbacks.onSaveDevice(data);
+    });
+    document.getElementById('btnDeleteDevice').addEventListener('click', () => {
+      const id = document.getElementById('detailIp').dataset.id;
+      if (callbacks.onDeleteDevice) callbacks.onDeleteDevice(id);
+    });
+
+    const typeSelect = document.getElementById('detailType');
+    NetworkIcons.getAll().forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t;
+      opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+      typeSelect.appendChild(opt);
+    });
+  }
+
+  function setScanProgress(current, total) {
+    const el = document.getElementById('scanProgress');
+    const fill = document.getElementById('progressFill');
+    const text = document.getElementById('progressText');
+    if (total > 0) {
+      el.classList.add('active');
+      const pct = Math.round((current / total) * 100);
+      fill.style.width = pct + '%';
+      text.textContent = `${current} / ${total} (${pct}%)`;
+    } else {
+      el.classList.remove('active');
+      fill.style.width = '0%';
+      text.textContent = '0 / 0';
+    }
+  }
+
+  function setPending(list) {
+    const container = document.getElementById('pendingList');
+    if (!list || !list.length) {
+      container.innerHTML = '<div class="pending-empty" data-i18n="noPendingDevices">No pending devices</div>';
+      return;
+    }
+    container.innerHTML = '';
+    list.forEach(d => {
+      const item = document.createElement('div');
+      item.className = 'pending-item';
+      item.innerHTML = `
+        <div class="status-dot ${d.online ? 'online' : d.online === false ? 'offline' : ''}"></div>
+        <div style="flex:1;min-width:0;">
+          <div class="ip">${d.ip}</div>
+          <div class="mac">${d.mac || 'Unknown MAC'}</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary btn-sm" data-action="add" data-id="${d.id}">+</button>
+          <button class="btn btn-secondary btn-sm" data-action="remove" data-id="${d.id}">×</button>
+        </div>
+      `;
+      item.querySelector('[data-action="add"]').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (callbacks.onAddPending) callbacks.onAddPending(d);
+      });
+      item.querySelector('[data-action="remove"]').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (callbacks.onRemovePending) callbacks.onRemovePending(d.id);
+      });
+      item.addEventListener('click', () => {
+        if (callbacks.onSelectPending) callbacks.onSelectPending(d);
+      });
+      container.appendChild(item);
+    });
+  }
+
+  function showDetail(device) {
+    const panel = document.getElementById('detailPanel');
+    if (!device) { panel.style.display = 'none'; return; }
+    panel.style.display = 'block';
+    document.getElementById('detailIp').value = device.ip || '';
+    document.getElementById('detailIp').dataset.id = device.id;
+    document.getElementById('detailMac').value = device.mac || '';
+    document.getElementById('detailName').value = device.name || '';
+    document.getElementById('detailType').value = device.device_type || 'unknown';
+    document.getElementById('detailPorts').value = (device.ports || []).join(', ') || '';
+  }
+
+  function toast(msg, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = msg;
+    container.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+  }
+
+  return { init, setScanProgress, setPending, showDetail, toast };
+})();

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="networkMap">Network Map</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b8cff' stroke-width='2'%3E%3Ccircle cx='12' cy='5' r='3'/%3E%3Ccircle cx='19' cy='19' r='3'/%3E%3Ccircle cx='5' cy='19' r='3'/%3E%3Cline x1='12' y1='8' x2='12' y2='14'/%3E%3Cline x1='12' y1='14' x2='19' y2='19'/%3E%3Cline x1='12' y1='14' x2='5' y2='19'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/header.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#0d0f14; --bg2:#13161e; --bg3:#1a1e2a; --bg4:#222736;
+  --border:#2a3045; --accent:#5b8cff; --accent2:#3d6aff;
+  --green:#3dffa0; --red:#ff5b5b; --yellow:#ffd95b; --purple:#c084fc;
+  --text:#e2e8f8; --text2:#8892aa; --text3:#4a5468;
+  --mono:'JetBrains Mono',monospace; --display:'Inter',sans-serif;
+}
+html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:var(--display); }
+.layout { display:grid; grid-template-rows:52px 1fr; height:100vh; }
+
+/* Header (matches map.html) */
+.header { display:flex; align-items:center; gap:12px; padding:0 16px; background:var(--bg2); border-bottom:1px solid var(--border); }
+.header-logo { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:700; color:var(--text); }
+.header-logo svg { color:var(--accent); }
+.btn { display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border-radius:7px; border:1px solid var(--border); background:transparent; color:var(--text2); font-family:var(--display); font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; text-decoration:none; }
+.btn:hover { background:var(--bg3); color:var(--text); }
+.btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.hcenter { flex:1; display:flex; align-items:center; gap:8px; }
+.header-actions { display:flex; gap:8px; align-items:center; }
+.header-icon-btn { display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text2); cursor:pointer; transition:all .15s; }
+.header-icon-btn:hover { background:var(--bg3); color:var(--text); }
+
+/* Layout */
+.main { display:flex; overflow:hidden; }
+.sidebar { width:280px; background:var(--bg2); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+.sidebar-header { padding:12px 16px; border-bottom:1px solid var(--border); font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px; color:var(--text); }
+.sidebar-header svg { width:16px; height:16px; color:var(--accent); }
+.sidebar-section { padding:12px 16px; border-bottom:1px solid var(--border); }
+.sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text3); margin-bottom:10px; font-weight:600; }
+
+/* Scan */
+.scan-row { display:flex; gap:8px; margin-bottom:10px; }
+.scan-input { flex:1; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:6px 10px; color:var(--text); font-family:var(--mono); font-size:12px; }
+.scan-input:focus { outline:none; border-color:var(--accent); }
+.btn-primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+.btn-primary:hover { filter:brightness(1.1); background:var(--accent); }
+.btn-secondary { background:var(--bg3); color:var(--text2); border:1px solid var(--border); }
+.btn-sm { padding:4px 8px; font-size:11px; }
+
+.scan-progress { display:none; margin-top:8px; }
+.scan-progress.active { display:block; }
+.progress-bar { height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+.progress-fill { height:100%; background:var(--accent); width:0%; transition:width .3s; }
+.progress-text { font-size:11px; color:var(--text3); margin-top:4px; text-align:center; }
+
+/* Pending */
+.pending-list { max-height:200px; overflow-y:auto; }
+.pending-item { display:flex; align-items:center; gap:8px; padding:6px; border-radius:6px; cursor:pointer; transition:background .15s; }
+.pending-item:hover { background:var(--bg3); }
+.pending-item .ip { font-family:var(--mono); font-size:11px; color:var(--text); }
+.pending-item .mac { font-size:10px; color:var(--text3); }
+.pending-item .status-dot { width:6px; height:6px; border-radius:50%; background:var(--yellow); flex-shrink:0; }
+.pending-item .status-dot.online { background:var(--green); }
+.pending-item .status-dot.offline { background:var(--red); }
+.pending-item .actions { margin-left:auto; display:flex; gap:4px; opacity:0; transition:opacity .15s; }
+.pending-item:hover .actions { opacity:1; }
+.pending-empty { font-size:12px; color:var(--text3); text-align:center; padding:16px; }
+
+/* Detail */
+.detail-field { margin-bottom:10px; }
+.detail-label { font-size:11px; color:var(--text3); margin-bottom:3px; }
+.detail-input { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:5px 8px; color:var(--text); font-size:12px; font-family:var(--display); }
+.detail-input:focus { outline:none; border-color:var(--accent); }
+.detail-input[readonly] { color:var(--text2); cursor:default; }
+.detail-select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238892aa' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 8px center; padding-right:24px; }
+
+/* Canvas */
+.canvas-wrapper { flex:1; position:relative; overflow:hidden; background:var(--bg); }
+#networkSvg { width:100%; height:100%; cursor:grab; }
+#networkSvg:active { cursor:grabbing; }
+
+/* Node / Edge */
+.network-node { cursor:grab; }
+.network-node:active { cursor:grabbing; }
+.network-node .node-card { filter:drop-shadow(0 2px 6px rgba(0,0,0,.4)); }
+.network-node:hover .node-card { filter:drop-shadow(0 4px 12px rgba(91,140,255,.2)); }
+.network-node.selected .node-card rect { stroke:var(--accent); stroke-width:2; }
+.network-edge { stroke:var(--text3); stroke-opacity:.5; stroke-width:1.5; }
+.network-edge:hover { stroke:var(--accent); stroke-opacity:1; stroke-width:2; }
+.edge-label { font-size:10px; fill:var(--text3); font-family:var(--mono); pointer-events:none; }
+
+/* Toolbar */
+.mini-toolbar { position:absolute; bottom:16px; left:50%; transform:translateX(-50%); display:flex; gap:4px; background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:4px; z-index:50; }
+.mini-toolbar button { background:transparent; border:none; color:var(--text); padding:6px 10px; border-radius:6px; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:4px; }
+.mini-toolbar button:hover { background:var(--bg3); }
+.mini-toolbar button.active { background:var(--accent); color:#fff; }
+
+/* Tooltip / Toast */
+.tooltip { position:absolute; background:var(--bg2); border:1px solid var(--border); border-radius:6px; padding:8px 12px; font-size:12px; pointer-events:none; opacity:0; transition:opacity .15s; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,.3); }
+.tooltip.visible { opacity:1; }
+.toast-container { position:fixed; bottom:16px; right:16px; display:flex; flex-direction:column; gap:8px; z-index:200; }
+.toast { background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:10px 16px; font-size:13px; display:flex; align-items:center; gap:8px; animation:slideIn .3s ease; }
+.toast.success { border-left:3px solid var(--green); }
+.toast.error { border-left:3px solid var(--red); }
+@keyframes slideIn { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+
+/* Context menu */
+.context-menu { position:absolute; background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:4px; z-index:100; min-width:160px; box-shadow:0 8px 24px rgba(0,0,0,.4); display:none; }
+.context-menu-item { padding:6px 10px; border-radius:4px; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:8px; color:var(--text); }
+.context-menu-item:hover { background:var(--bg3); }
+.context-menu-sep { height:1px; background:var(--border); margin:4px 0; }
+.proj-dropdown { position:fixed; z-index:200; background:var(--bg3); border:1px solid var(--border); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.4); overflow:hidden; animation:fadeDown .15s ease; }
+.proj-dropdown-item { display:flex; align-items:center; gap:8px; padding:9px 12px; cursor:pointer; font-family:var(--mono); font-size:12px; color:var(--text2); transition:background .1s; }
+.proj-dropdown-item:hover { background:var(--bg4); color:var(--text); }
+.proj-dropdown-item.active { color:var(--accent); }
+@keyframes fadeDown { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <header class="header">
+    <a href="/" class="btn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      <span data-i18n="editor">Editor</span>
+    </a>
+    <a href="/map.html" class="btn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m8 21 8 0M12 17v4"/><path d="m7 8 2 2-2 2M11 12h4"/></svg>
+      <span data-i18n="containerMap">Map</span>
+    </a>
+    <a href="/homelab.html" class="btn active">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="19" cy="19" r="3"/><circle cx="5" cy="19" r="3"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="12" y1="14" x2="19" y2="19"/><line x1="12" y1="14" x2="5" y2="19"/></svg>
+      <span data-i18n="networkMap">Network</span>
+    </a>
+    <div class="hcenter"></div>
+    <div class="header-actions">
+      <div class="header-icon-btn" id="langBtn" onclick="toggleLangDropdown()" title="Language" data-i18n="langLabel" data-i18n-attr="title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+      </div>
+      <div class="header-icon-btn" id="themeBtn" onclick="Themes.toggle()" title="Theme" data-i18n="themeLabel" data-i18n-attr="title">
+        <svg class="theme-icon-dark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="theme-icon-light" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </div>
+      <a class="header-icon-btn" href="https://github.com/John710/kompoz" target="_blank" rel="noopener" data-tooltip="GitHub">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+      </a>
+      <div class="header-profile" id="profileBlock" onclick="toggleProfileDropdown()">
+        <div class="profile-avatar" id="profileAvatar">U</div>
+        <span class="profile-name" id="profileName">User</span>
+        <svg class="profile-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="19" cy="19" r="3"/><circle cx="5" cy="19" r="3"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="12" y1="14" x2="19" y2="19"/><line x1="12" y1="14" x2="5" y2="19"/></svg>
+        <span data-i18n="networkMap">Network Map</span>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title" data-i18n="scanNetwork">Scan Network</div>
+        <div class="scan-row">
+          <input type="text" class="scan-input" id="scanCidr" placeholder="192.168.1.0/24" value="192.168.1.0/24">
+          <button class="btn btn-primary" id="btnScan" data-i18n="scan">Scan</button>
+        </div>
+        <div class="scan-row">
+          <button class="btn btn-secondary btn-sm" id="btnCheckStatus" data-i18n="checkStatus">Check Status</button>
+          <button class="btn btn-secondary btn-sm" id="btnClearPending" data-i18n="clearPending">Clear Pending</button>
+        </div>
+        <div class="scan-progress" id="scanProgress">
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="progress-text" id="progressText">0 / 0</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+        <div class="sidebar-section-title" data-i18n="pendingDevices">Pending Devices</div>
+        <div class="pending-list" id="pendingList">
+          <div class="pending-empty" data-i18n="noPendingDevices">No pending devices</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section" id="detailPanel" style="display:none;">
+        <div class="sidebar-section-title" data-i18n="deviceDetails">Device Details</div>
+        <div class="detail-field">
+          <div class="detail-label">IP</div>
+          <input type="text" class="detail-input" id="detailIp" readonly>
+        </div>
+        <div class="detail-field">
+          <div class="detail-label">MAC</div>
+          <input type="text" class="detail-input" id="detailMac" readonly>
+        </div>
+        <div class="detail-field">
+          <div class="detail-label" data-i18n="name">Name</div>
+          <input type="text" class="detail-input" id="detailName">
+        </div>
+        <div class="detail-field">
+          <div class="detail-label" data-i18n="type">Type</div>
+          <select class="detail-input detail-select" id="detailType"></select>
+        </div>
+        <div class="detail-field" id="detailPortsRow">
+          <div class="detail-label" data-i18n="ports">Ports</div>
+          <input type="text" class="detail-input" id="detailPorts" readonly>
+        </div>
+        <div class="scan-row" style="margin-top:8px;">
+          <button class="btn btn-primary btn-sm" id="btnSaveDevice" data-i18n="save">Save</button>
+          <button class="btn btn-secondary btn-sm" id="btnDeleteDevice" data-i18n="delete">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-wrapper">
+      <svg id="networkSvg"></svg>
+      <div class="mini-toolbar">
+        <button id="toolPan" class="active" title="Pan"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 9l4-4 4 4M9 5v14"/></svg></button>
+        <button id="toolSelect" title="Select"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg></button>
+        <button id="toolLink" title="Link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+        <button id="btnZoomIn" title="Zoom In">+</button>
+        <button id="btnZoomOut" title="Zoom Out">−</button>
+        <button id="btnZoomFit" title="Fit" data-i18n="fit">Fit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+<div class="context-menu" id="contextMenu"></div>
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+function toggleProfileDropdown() {
+  const existing = document.getElementById('profileDropdown');
+  if (existing) { existing.remove(); return; }
+  const btn = document.getElementById('profileBlock');
+  if (!btn) return;
+  const rect = btn.getBoundingClientRect();
+  const html = `<div class="proj-dropdown-item" onclick="logout();document.getElementById('profileDropdown')?.remove()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+    Logout
+  </div>`;
+  const dd = document.createElement('div');
+  dd.id = 'profileDropdown';
+  dd.className = 'proj-dropdown';
+  dd.style.top = (rect.bottom + 4) + 'px';
+  const ddWidth = Math.max(rect.width, 140);
+  dd.style.width = ddWidth + 'px';
+  if (rect.left + ddWidth > window.innerWidth - 8) {
+    dd.style.left = 'auto';
+    dd.style.right = (window.innerWidth - rect.right) + 'px';
+  } else {
+    dd.style.left = rect.left + 'px';
+    dd.style.right = 'auto';
+  }
+  dd.innerHTML = html;
+  document.body.appendChild(dd);
+  requestAnimationFrame(() => {
+    document.addEventListener('click', function close(e) {
+      if (!dd.contains(e.target) && e.target !== btn) { dd.remove(); document.removeEventListener('click', close); }
+    });
+  });
+}
+async function logout() {
+  try { await fetch('/api/logout', { method: 'POST' }); } catch {}
+  window.location.href = '/login.html';
+}
+async function loadUser() {
+  try {
+    const r = await fetch('/api/me', { cache: 'no-store' });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d.enabled && d.user) {
+      const el = document.getElementById('profileName');
+      if (el) el.textContent = d.user.name;
+      const av = document.getElementById('profileAvatar');
+      if (av) {
+        if (d.user.avatar) {
+          av.style.display = '';
+          av.innerHTML = `<img src="${d.user.avatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;">`;
+        } else {
+          av.style.display = 'none';
+        }
+      }
+    }
+  } catch {}
+}
+</script>
+<script src="js/i18n.js"></script>
+<script src="js/themes.js"></script>
+<script src="js/network-icons.js"></script>
+<script src="js/network-canvas.js"></script>
+<script src="js/network-sidebar.js"></script>
+<script src="js/homelab.js"></script>
+</body>
+</html>

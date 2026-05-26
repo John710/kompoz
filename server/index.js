@@ -2,6 +2,7 @@ const express = require('express');
 const path    = require('path');
 const fs      = require('fs');
 const crypto  = require('crypto');
+const db      = require('./utils/db');
 const { getMountRoots, getAllProjects } = require('./utils/fs');
 const pkg = require('../package.json');
 
@@ -49,25 +50,63 @@ function parseCookies(req) {
   return cookies;
 }
 
-function requireAuth(req, res, next) {
-  if (!AUTH_ENABLED) return next();
-  if (req.path === '/login.html' || req.path === '/api/login') return next();
-  if (req.path === '/api/info') return next();
-  if (req.path === '/api/latest-release') return next();
-  if (req.path.startsWith('/locales/') || req.path === '/api/locales') return next();
-  if (req.path.startsWith('/css/') || req.path.startsWith('/js/')) return next();
-
-  const cookies = parseCookies(req);
-  const token = cookies[COOKIE_NAME];
-  const data = token ? verifyToken(token) : null;
-  if (!data) {
-    if (req.path.startsWith('/api/')) {
-      return res.status(401).json({ error: 'Unauthorized' });
+async function isAuthEnabled() {
+  if (process.env.DATABASE_URL) {
+    try {
+      const { rows } = await db.query('SELECT id FROM users LIMIT 1');
+      return rows.length > 0 || AUTH_ENABLED;
+    } catch {
+      return AUTH_ENABLED;
     }
+  }
+  return AUTH_ENABLED;
+}
+
+async function requireAuth(req, res, next) {
+  try {
+    const enabled = await isAuthEnabled();
+    if (!enabled) return next();
+
+    if (req.path === '/login.html' || req.path === '/api/login') return next();
+    if (req.path === '/api/info') return next();
+    if (req.path === '/api/latest-release') return next();
+    if (req.path.startsWith('/locales/') || req.path === '/api/locales') return next();
+    if (req.path.startsWith('/css/') || req.path.startsWith('/js/')) return next();
+
+    const cookies = parseCookies(req);
+    const token = cookies[COOKIE_NAME];
+
+    if (!token) {
+      if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'Unauthorized' });
+      return res.redirect('/login.html');
+    }
+
+    if (process.env.DATABASE_URL) {
+      const { rows } = await db.query(
+        'SELECT u.username, u.name FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token = $1 AND s.expires_at > NOW()',
+        [token]
+      );
+      if (rows.length === 0) {
+        if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'Unauthorized' });
+        return res.redirect('/login.html');
+      }
+      req.authUser = rows[0].username;
+      req.authName = rows[0].name;
+    } else {
+      const data = verifyToken(token);
+      if (!data) {
+        if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'Unauthorized' });
+        return res.redirect('/login.html');
+      }
+      req.authUser = data.username;
+    }
+
+    next();
+  } catch (err) {
+    console.error('Auth error:', err);
+    if (req.path.startsWith('/api/')) return res.status(500).json({ error: 'Auth error' });
     return res.redirect('/login.html');
   }
-  req.authUser = data.username;
-  next();
 }
 
 app.use(requireAuth);
@@ -79,22 +118,58 @@ app.use('/api/projects', require('./routes/projects'));
 app.use('/api/files',    require('./routes/files'));
 
 // POST /api/login
-app.post('/api/login', (req, res) => {
-  if (!AUTH_ENABLED) return res.json({ ok: true, enabled: false });
-  const { username, password } = req.body || {};
-  if (username !== AUTH_USER || password !== AUTH_PASS) {
-    return res.status(401).json({ error: 'Invalid credentials' });
+app.post('/api/login', async (req, res) => {
+  try {
+    const enabled = await isAuthEnabled();
+    if (!enabled) return res.json({ ok: true, enabled: false });
+
+    const { username, password } = req.body || {};
+
+    if (process.env.DATABASE_URL) {
+      const { rows } = await db.query('SELECT id, password_hash, name FROM users WHERE username = $1', [username]);
+      if (rows.length === 0) return res.status(401).json({ error: 'Invalid credentials' });
+
+      const bcrypt = require('bcryptjs');
+      const valid = await bcrypt.compare(password, rows[0].password_hash);
+      if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + TOKEN_TTL_MS);
+      await db.query('INSERT INTO sessions (user_id, token, expires_at) VALUES ($1, $2, $3)', [rows[0].id, token, expiresAt]);
+
+      res.setHeader('Set-Cookie', COOKIE_NAME + '=' + token + '; HttpOnly; Path=/; Max-Age=' + (TOKEN_TTL_MS / 1000) + '; SameSite=Strict');
+      res.json({ ok: true });
+    } else {
+      if (username !== AUTH_USER || password !== AUTH_PASS) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+      const expiry = Date.now() + TOKEN_TTL_MS;
+      const token = signToken(username, expiry);
+      res.setHeader('Set-Cookie', COOKIE_NAME + '=' + token + '; HttpOnly; Path=/; Max-Age=' + (TOKEN_TTL_MS / 1000) + '; SameSite=Strict');
+      res.json({ ok: true });
+    }
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Login error' });
   }
-  const expiry = Date.now() + TOKEN_TTL_MS;
-  const token = signToken(username, expiry);
-  res.setHeader('Set-Cookie', COOKIE_NAME + '=' + token + '; HttpOnly; Path=/; Max-Age=' + (TOKEN_TTL_MS / 1000) + '; SameSite=Strict');
-  res.json({ ok: true });
 });
 
 // POST /api/logout
-app.post('/api/logout', (req, res) => {
-  res.setHeader('Set-Cookie', COOKIE_NAME + '=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict');
-  res.json({ ok: true });
+app.post('/api/logout', async (req, res) => {
+  try {
+    if (process.env.DATABASE_URL) {
+      const cookies = parseCookies(req);
+      const token = cookies[COOKIE_NAME];
+      if (token) {
+        await db.query('DELETE FROM sessions WHERE token = $1', [token]);
+      }
+    }
+    res.setHeader('Set-Cookie', COOKIE_NAME + '=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict');
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Logout error:', err);
+    res.status(500).json({ error: 'Logout error' });
+  }
 });
 
 // GET /api/locales -- list available languages
@@ -115,10 +190,16 @@ app.get('/api/locales', (req, res) => {
 });
 
 // GET /api/me -- current user
-app.get('/api/me', (req, res) => {
-  if (!AUTH_ENABLED) return res.json({ enabled: false });
-  if (!req.authUser) return res.status(401).json({ error: 'Unauthorized' });
-  res.json({ enabled: true, user: { name: req.authUser } });
+app.get('/api/me', async (req, res) => {
+  try {
+    const enabled = await isAuthEnabled();
+    if (!enabled) return res.json({ enabled: false });
+    if (!req.authUser) return res.status(401).json({ error: 'Unauthorized' });
+    res.json({ enabled: true, user: { name: req.authName || req.authUser } });
+  } catch (err) {
+    console.error('Me error:', err);
+    res.status(500).json({ error: 'Me error' });
+  }
 });
 
 // GET /api/info -- mount status (for UI)
@@ -152,31 +233,56 @@ app.get('/api/latest-release', async (req, res) => {
 });
 
 // POST /api/verify-password -- password check for dangerous ops
-app.post('/api/verify-password', (req, res) => {
-  if (!AUTH_ENABLED) return res.json({ ok: true });
-  const { password } = req.body || {};
-  if (password !== AUTH_PASS) {
-    return res.status(401).json({ error: 'Invalid password', errorKey: 'invalidPassword' });
+app.post('/api/verify-password', async (req, res) => {
+  try {
+    const { password } = req.body || {};
+    if (!password) return res.status(401).json({ error: 'Invalid password', errorKey: 'invalidPassword' });
+
+    if (process.env.DATABASE_URL && req.authUser) {
+      const { rows } = await db.query('SELECT password_hash FROM users WHERE username = $1', [req.authUser]);
+      if (rows.length === 0) return res.status(401).json({ error: 'Invalid password', errorKey: 'invalidPassword' });
+
+      const bcrypt = require('bcryptjs');
+      const valid = await bcrypt.compare(password, rows[0].password_hash);
+      if (!valid) return res.status(401).json({ error: 'Invalid password', errorKey: 'invalidPassword' });
+    } else {
+      if (!AUTH_ENABLED) return res.json({ ok: true });
+      if (password !== AUTH_PASS) {
+        return res.status(401).json({ error: 'Invalid password', errorKey: 'invalidPassword' });
+      }
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Verify password error:', err);
+    res.status(500).json({ error: 'Verify password error' });
   }
-  res.json({ ok: true });
 });
 
 if (require.main === module) {
-  app.listen(PORT, () => {
-    const mounts = getMountRoots();
-    console.log('Kompoz v' + pkg.version + ' running on :' + PORT);
-    if (AUTH_ENABLED) {
-      console.log('Authentication enabled (user: ' + AUTH_USER + ')');
-    } else {
-      console.log('Authentication disabled -- set AUTH_USER and AUTH_PASS to enable');
-    }
-    console.log('Mount points (' + mounts.length + '):');
-    mounts.forEach(m => console.log('  ' + m));
-    try {
-      const projects = getAllProjects();
-      console.log('Projects found: ' + (projects.map(p => p.name).join(', ') || 'none'));
-    } catch {}
-  });
+  (async () => {
+    await db.initDatabase();
+    await db.migrateAuth();
+
+    app.listen(PORT, () => {
+      const mounts = getMountRoots();
+      console.log('Kompoz v' + pkg.version + ' running on :' + PORT);
+      (async () => {
+        const enabled = await isAuthEnabled();
+        if (enabled) {
+          console.log('Authentication enabled');
+        } else {
+          console.log('Authentication disabled -- set AUTH_USER and AUTH_PASS to enable');
+        }
+      })();
+      console.log('Mount points (' + mounts.length + '):');
+      mounts.forEach(m => console.log('  ' + m));
+      try {
+        const projects = getAllProjects();
+        console.log('Projects found: ' + (projects.map(p => p.name).join(', ') || 'none'));
+      } catch {}
+    });
+  })();
 }
 
 module.exports = app;

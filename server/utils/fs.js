@@ -118,8 +118,17 @@ function countFiles(dir) {
 }
 
 function safeResolvePath(base, filePath) {
-  const baseResolved = path.resolve(base);
-  const resolved = path.resolve(baseResolved, filePath);
+  const baseResolved = fs.realpathSync(path.resolve(base));
+  let resolved;
+  try {
+    resolved = fs.realpathSync(path.resolve(baseResolved, filePath));
+  } catch (e) {
+    if (e.code === 'ENOENT') {
+      resolved = path.resolve(baseResolved, filePath);
+    } else {
+      throw e;
+    }
+  }
   if (resolved !== baseResolved && !resolved.startsWith(baseResolved + path.sep)) throw new Error('Path traversal detected');
   return resolved;
 }

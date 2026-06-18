@@ -28,6 +28,7 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
 .btn { display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border-radius:7px; border:1px solid var(--border); background:transparent; color:var(--text2); font-family:var(--display); font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; text-decoration:none; }
 .btn:hover { background:var(--bg3); color:var(--text); }
 .btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.scan-row .btn { white-space: nowrap; flex-shrink: 0; }
 .hcenter { flex:1; display:flex; align-items:center; gap:8px; }
 .header-actions { display:flex; gap:8px; align-items:center; }
 .header-icon-btn { display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text2); cursor:pointer; transition:all .15s; }
@@ -306,7 +307,7 @@ function toggleProfileDropdown() {
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
     </svg>
-    Logout
+    ${I18N.t('logout')}
   </div>`;
   const dd = document.createElement('div');
   dd.id = 'profileDropdown';

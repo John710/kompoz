@@ -1,6 +1,9 @@
 FROM node:22-alpine
 WORKDIR /app
 
+# Install su-exec for privilege dropping
+RUN apk add --no-cache su-exec
+
 # Install dependencies first for better layer caching
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
@@ -10,13 +13,14 @@ COPY server/ server/
 COPY public/ public/
 COPY locales/ locales/
 
-# Security: run as non-root user
-USER node
+# Copy and set up entrypoint
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod 755 /app/entrypoint.sh
 
 ENV NODE_ENV=production
-EXPOSE 3000
+EXPOSE 3710
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/', (r) => {process.exit(0)}).on('error', () => process.exit(1))"
+  CMD wget -q --spider http://localhost:3710/api/info
 
-CMD ["node", "server/index.js"]
+ENTRYPOINT ["./entrypoint.sh"]

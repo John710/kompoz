@@ -25,6 +25,13 @@
 
 .header-logo svg { color: var(--accent); }
 
+.hcenter {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .header-icon-btn {
   display: flex;
   align-items: center;

@@ -273,7 +273,7 @@ function renderProjects() {
 
   if (!projects.length) {
     countEl.textContent = I18N.t('noProjects');
-    grid.innerHTML = `
+    let html = `
       <div class="empty-state" style="grid-column:1/-1">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
@@ -282,6 +282,15 @@ function renderProjects() {
         <p data-i18n="noProjectsHint">Создайте первый проект, чтобы начать</p>
       </div>
     `;
+    if (canCreate) {
+      html += `
+        <div class="proj-card-new" onclick="openNewProjectModal()" title="${escapeHtml(I18N.t('newFileTooltip'))}">
+          <div class="plus">+</div>
+          <div class="label" data-i18n="newProjectTitle">Новый проект</div>
+        </div>
+      `;
+    }
+    grid.innerHTML = html;
     I18N.refresh();
     return;
   }

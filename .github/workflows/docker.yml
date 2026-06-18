@@ -77,7 +77,7 @@ jobs:
 
   release:
     needs: build
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref, '-beta')
     runs-on: ubuntu-latest
     timeout-minutes: 30
 

@@ -73,21 +73,12 @@ router.post('/devices', async (req, res) => {
       await db.query(
         `UPDATE network_devices SET
           name = $1, type = $2, status = $3, x = $4, y = $5, notes = $6,
-          check_method = $7, check_target = $8, properties = $9, mac = $10, ports = $11, vendor = $12,
-          os = $13, banners = $14, hostname_mdns = $15, hostname_netbios = $16,
-          updated_at = NOW()
-         WHERE id = $17`,
+          check_method = $7, check_target = $8, properties = $9, updated_at = NOW()
+         WHERE id = $10`,
         [
           d.name, d.device_type || d.type, d.status, d.x, d.y, d.notes,
           d.check_method, d.check_target,
           JSON.stringify(d.properties || []),
-          d.mac || null,
-          d.ports || [],
-          d.vendor || null,
-          d.os || null,
-          d.banners ? JSON.stringify(d.banners) : null,
-          d.hostname_mdns || null,
-          d.hostname_netbios || null,
           d.id
         ]
       );
@@ -95,20 +86,15 @@ router.post('/devices', async (req, res) => {
     } else {
       const { rows } = await db.query(
         `INSERT INTO network_devices
-          (ip, mac, name, type, status, x, y, notes, check_method, check_target, properties, ports, vendor, os, banners, hostname_mdns, hostname_netbios)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+          (ip, mac, name, type, status, x, y, notes, check_method, check_target, properties, ports)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          RETURNING id`,
         [
           d.ip, d.mac || null, d.name || '', d.device_type || d.type || 'unknown', d.status || 'pending',
           d.x || 0, d.y || 0, d.notes || '',
           d.check_method || 'ping', d.check_target || null,
           JSON.stringify(d.properties || []),
-          d.ports || [],
-          d.vendor || null,
-          d.os || null,
-          d.banners ? JSON.stringify(d.banners) : null,
-          d.hostname_mdns || null,
-          d.hostname_netbios || null
+          d.ports || []
         ]
       );
       res.json({ ok: true, id: rows[0].id });
@@ -129,44 +115,12 @@ router.delete('/devices/:id', async (req, res) => {
   }
 });
 
-// POST /api/network/clear-map
-router.post('/clear-map', async (req, res) => {
-  try {
-    const { option } = req.body;
-    if (option === 'all') {
-      // Clear all network data
-      await db.query('DELETE FROM network_links');
-      await db.query('DELETE FROM network_devices');
-      await db.query('DELETE FROM network_scan_history');
-    } else if (option === 'devices') {
-      // Clear only mapped devices and links
-      await db.query(
-        "DELETE FROM network_links WHERE source_id IN (SELECT id FROM network_devices WHERE status = 'mapped') OR target_id IN (SELECT id FROM network_devices WHERE status = 'mapped')"
-      );
-      await db.query("DELETE FROM network_devices WHERE status = 'mapped'");
-    } else if (option === 'history') {
-      // Clear only scan history
-      await db.query('DELETE FROM network_scan_history');
-    }
-    res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // GET /api/network/links
 router.get('/links', async (req, res) => {
   try {
     const { rows } = await db.query('SELECT * FROM network_links ORDER BY created_at DESC');
-    // Convert snake_case to camelCase for client-side friendly
-    const links = rows.map(link => ({
-      ...link,
-      sourcePos: link.source_pos,
-      targetPos: link.target_pos
-    }));
-    res.json({ links });
+    res.json({ links: rows });
   } catch (err) {
-    console.error('server GET /links error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -177,19 +131,18 @@ router.post('/links', async (req, res) => {
     const d = req.body || {};
     if (d.id) {
       await db.query(
-        'UPDATE network_links SET source_id = $1, target_id = $2, type = $3, label = $4, waypoints = $5, source_pos = $6, target_pos = $7 WHERE id = $8',
-        [d.source_id, d.target_id, d.type, d.label, JSON.stringify(d.waypoints || []), d.sourcePos || null, d.targetPos || null, d.id]
+        'UPDATE network_links SET source_id = $1, target_id = $2, type = $3, label = $4 WHERE id = $5',
+        [d.source_id, d.target_id, d.type, d.label, d.id]
       );
       res.json({ ok: true, id: d.id });
     } else {
       const { rows } = await db.query(
-        'INSERT INTO network_links (source_id, target_id, type, label, waypoints, source_pos, target_pos) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
-        [d.source_id, d.target_id, d.type || 'ethernet', d.label || d.type || '', JSON.stringify(d.waypoints || []), d.sourcePos || null, d.targetPos || null]
+        'INSERT INTO network_links (source_id, target_id, type, label) VALUES ($1, $2, $3, $4) RETURNING id',
+        [d.source_id, d.target_id, d.type || 'ethernet', d.label || d.type || '']
       );
       res.json({ ok: true, id: rows[0].id });
     }
   } catch (err) {
-    console.error('server POST /links error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -220,18 +173,10 @@ router.post('/check-status', async (req, res) => {
       }
       res.json({ results });
     } else {
-      // Check ALL devices (both pending and mapped)
-      const { rows: allDevices } = await db.query('SELECT * FROM network_devices');
-      const results = [];
-      for (const device of allDevices) {
-        const online = await checkDevice(device);
-        await db.query('UPDATE network_devices SET online = $1, updated_at = NOW() WHERE id = $2', [online, device.id]);
-        results.push({ id: device.id, online });
-      }
-      res.json({ ok: true, message: 'All devices checked', results });
+      await checkAll();
+      res.json({ ok: true, message: 'All devices checked' });
     }
   } catch (err) {
-    console.error('server POST /check-status error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -245,30 +190,6 @@ router.get('/scan-history', async (req, res) => {
     res.json({ history: rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
-  }
-});
-
-// Settings endpoints
-router.get('/settings', async (req, res) => {
-  try {
-    const { rows } = await db.query('SELECT * FROM settings WHERE key LIKE $1', ['statusCheckInterval']);
-    const setting = rows[0];
-    res.json({ interval: setting ? parseInt(setting.value, 10) : 0 });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-router.post('/settings', async (req, res) => {
-  try {
-    const { interval } = req.body;
-    await db.query(`
-      INSERT INTO settings (key, value) VALUES ($1, $2)
-      ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()
-    `, ['statusCheckInterval', String(interval)]);
-    res.json({ ok: true, interval });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
   }
 });
 

@@ -8,31 +8,10 @@ let timer = null;
 
 function checkPing(ip, timeout = 2000) {
   return new Promise((resolve) => {
-    let cmd;
-    if (process.platform === 'win32') {
-      // Windows ping: -n count, -w timeout in milliseconds
-      cmd = `ping -n 1 -w ${timeout} ${ip}`;
-    } else {
-      // Linux/macOS ping: -c count, -W timeout in seconds
-      cmd = `ping -c 1 -W ${Math.ceil(timeout / 1000)} ${ip}`;
-    }
-    require('child_process').exec(cmd, (err, stdout, stderr) => {
-      // Check output for success indicators
-      if (err) {
-        // Sometimes ping returns non-zero exit code even if it's reachable, check output
-        const successPatterns = [
-          /TTL=\d+/i,
-          /bytes from/i,
-          /Reply from/i,
-          /1 received/i
-        ];
-        const isSuccess = successPatterns.some(pattern => pattern.test(stdout) || pattern.test(stderr));
-        resolve(isSuccess);
-      } else {
-        // No error, assume success
-        resolve(true);
-      }
-    });
+    const cmd = process.platform === 'win32'
+      ? `ping -n 1 -w ${timeout} ${ip}`
+      : `ping -c 1 -W ${Math.ceil(timeout / 1000)} ${ip}`;
+    require('child_process').exec(cmd, (err) => resolve(!err));
   });
 }
 
@@ -48,10 +27,9 @@ function checkTcp(ip, port, timeout = 2000) {
   });
 }
 
-function checkHttp(ip, target = '', timeout = 3000) {
-  const path = target || '/';
+function checkHttp(ip, timeout = 3000) {
   return new Promise((resolve) => {
-    const req = http.get(`http://${ip}${path}`, { timeout }, (res) => {
+    const req = http.get(`http://${ip}/`, { timeout }, (res) => {
       resolve(res.statusCode < 500);
     });
     req.on('error', () => resolve(false));
@@ -68,16 +46,11 @@ async function checkDevice(device) {
 
   if (method === 'ping') {
     online = await checkPing(device.ip);
-  } else if (method === 'tcp') {
-    const port = parseInt(target, 10) || ports[0];
-    if (port) {
-      online = await checkTcp(device.ip, port);
-    } else {
-      // Fall back to ping if no port provided
-      online = await checkPing(device.ip);
-    }
+  } else if (method === 'tcp' && target) {
+    const port = parseInt(target, 10);
+    online = await checkTcp(device.ip, port);
   } else if (method === 'http') {
-    online = await checkHttp(device.ip, target);
+    online = await checkHttp(device.ip);
   } else if (ports.length > 0) {
     // Default: try first open port
     online = await checkTcp(device.ip, ports[0]);
@@ -90,9 +63,8 @@ async function checkDevice(device) {
 
 async function checkAll() {
   try {
-    // Check ALL devices (both pending and mapped)
     const { rows: devices } = await db.query(
-      "SELECT id, ip, check_method, check_target, ports FROM network_devices"
+      "SELECT id, ip, check_method, check_target, ports FROM network_devices WHERE status = 'mapped'"
     );
 
     for (const device of devices) {

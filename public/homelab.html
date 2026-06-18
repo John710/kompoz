@@ -1,57 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<script>(function(){var t=localStorage.getItem('ce-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
-<script>
-  // Initialize i18n immediately to prevent flash of English text
-  (function() {
-    const savedLang = localStorage.getItem('ce-lang') || 'en';
-    document.documentElement.lang = savedLang;
-  })();
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="networkMap"></title>
+<title data-i18n="networkMap">Network Map</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b8cff' stroke-width='2'><rect x='2' y='3' width='20' height='14' rx='2'/><path d='m8 21 8 0M12 17v4'/><path d='m7 8 2 2-2 2M11 12h4'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/header.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
-<script src="js/i18n.js"></script>
-<script src="js/themes.js"></script>
-<script src="js/network-icons.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root[data-theme="dark"] {
+:root {
   --bg:#0d0f14; --bg2:#13161e; --bg3:#1a1e2a; --bg4:#222736;
   --border:#2a3045; --accent:#5b8cff; --accent2:#3d6aff;
   --green:#3dffa0; --red:#ff5b5b; --yellow:#ffd95b; --purple:#c084fc;
   --text:#e2e8f8; --text2:#8892aa; --text3:#4a5468;
-  --mono:'JetBrains Mono',monospace; --display:'Inter',sans-serif;;
-  --panel:#1a1e2a;}
-:root[data-theme="light"] {
-  --bg:#ffffff; --bg2:#f6f8fa; --bg3:#eaeef2; --bg4:#e1e4e8;
-  --border:#d0d7de; --accent:#0969da; --accent2:#0550ae;
-  --green:#1a7f37; --red:#cf222e; --yellow:#9a6700; --purple:#8250df;
-  --text:#24292f; --text2:#57606a; --text3:#8c959f;
-  --mono:'JetBrains Mono',monospace; --display:'Inter',sans-serif;;
-  --panel:#ffffff;}
-
-body { visibility: hidden; }
+  --mono:'JetBrains Mono',monospace; --display:'Inter',sans-serif;
+}
 html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:var(--display); }
 .layout { display:grid; grid-template-rows:52px 1fr; height:100vh; }
 
+/* Header (matches map.html) */
+.header { display:flex; align-items:center; gap:12px; padding:0 16px; background:var(--bg2); border-bottom:1px solid var(--border); }
+.header-logo { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:700; color:var(--text); }
+.header-logo svg { color:var(--accent); }
+.btn { display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border-radius:7px; border:1px solid var(--border); background:transparent; color:var(--text2); font-family:var(--display); font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; text-decoration:none; }
+.btn:hover { background:var(--bg3); color:var(--text); }
+.btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.hcenter { flex:1; display:flex; align-items:center; gap:8px; }
+.header-actions { display:flex; gap:8px; align-items:center; }
+.header-icon-btn { display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text2); cursor:pointer; transition:all .15s; }
+.header-icon-btn:hover { background:var(--bg3); color:var(--text); }
+
 /* Layout */
 .main { display:flex; overflow:hidden; }
-.sidebar { width:320px; background:var(--bg2); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; }
+.sidebar { width:280px; background:var(--bg2); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
 .sidebar-header { padding:12px 16px; border-bottom:1px solid var(--border); font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px; color:var(--text); }
 .sidebar-header svg { width:16px; height:16px; color:var(--accent); }
 .sidebar-section { padding:12px 16px; border-bottom:1px solid var(--border); }
 .sidebar-section-title { font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text3); margin-bottom:10px; font-weight:600; }
 
 /* Scan */
-.scan-row { display:flex; gap:8px; margin-bottom:10px; align-items:center; }
+.scan-row { display:flex; gap:8px; margin-bottom:10px; }
 .scan-input { flex:1; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:6px 10px; color:var(--text); font-family:var(--mono); font-size:12px; }
 .scan-input:focus { outline:none; border-color:var(--accent); }
 .btn-primary { background:var(--accent); color:#fff; border-color:var(--accent); }
@@ -66,7 +57,7 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
 .progress-text { font-size:11px; color:var(--text3); margin-top:4px; text-align:center; }
 
 /* Pending */
-.pending-list { flex:1; overflow-y:auto; }
+.pending-list { max-height:200px; overflow-y:auto; }
 .pending-item { display:flex; align-items:center; gap:8px; padding:6px; border-radius:6px; cursor:pointer; transition:background .15s; }
 .pending-item:hover { background:var(--bg3); }
 .pending-item .ip { font-family:var(--mono); font-size:11px; color:var(--text); }
@@ -102,10 +93,10 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
 .edge-label { font-size:10px; fill:var(--text3); font-family:var(--mono); pointer-events:none; }
 
 /* Toolbar */
-.mini-toolbar { position:absolute; bottom:16px; left:50%; transform:translateX(-50%); display:flex; gap:8px; align-items:center; padding:6px 10px; background:var(--bg2); border:1px solid var(--border); border-radius:8px; z-index:50; box-shadow:0 4px 12px rgba(0,0,0,.3); }
-.mini-toolbar button { background:transparent; border:1px solid var(--border); color:var(--text2); padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:4px; font-family:var(--display); font-weight:600; transition:all .15s; }
-.mini-toolbar button:hover { background:var(--bg3); color:var(--text); }
-.mini-toolbar button.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.mini-toolbar { position:absolute; bottom:16px; left:50%; transform:translateX(-50%); display:flex; gap:4px; background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:4px; z-index:50; }
+.mini-toolbar button { background:transparent; border:none; color:var(--text); padding:6px 10px; border-radius:6px; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:4px; }
+.mini-toolbar button:hover { background:var(--bg3); }
+.mini-toolbar button.active { background:var(--accent); color:#fff; }
 
 /* Tooltip / Toast */
 .tooltip { position:absolute; background:var(--bg2); border:1px solid var(--border); border-radius:6px; padding:8px 12px; font-size:12px; pointer-events:none; opacity:0; transition:opacity .15s; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,.3); }
@@ -117,14 +108,9 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
 @keyframes slideIn { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
 
 /* Anchors */
-.node-anchors { pointer-events: none; opacity: 0; }
-.network-node.selected .node-anchors,
-.link-dragging .network-node .node-anchors { opacity: 1; }
-.node-anchors .anchor { pointer-events: all; transition: r .15s, opacity .15s; }
-.network-node:hover .node-anchors .anchor,
-.network-node.selected .node-anchors .anchor,
-.link-dragging .network-node .node-anchors .anchor { opacity:0.7; }
-.network-node .node-anchors .anchor:hover { opacity:1; r:8; }
+.node-anchors { pointer-events:none; }
+.node-anchors .anchor { pointer-events:all; transition:r .15s, opacity .15s; }
+.network-node:hover .node-anchors .anchor { opacity:0.7; }
 
 /* Context menu */
 .context-menu { position:absolute; background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:4px; z-index:100; min-width:160px; box-shadow:0 8px 24px rgba(0,0,0,.4); display:none; }
@@ -136,51 +122,31 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
 .proj-dropdown-item:hover { background:var(--bg4); color:var(--text); }
 .proj-dropdown-item.active { color:var(--accent); }
 @keyframes fadeDown { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
-@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-@keyframes flow{to{stroke-dashoffset:-20}}
-@keyframes status-pulse{
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-.custom-select{position:relative;user-select:none;flex:1;}
-.custom-select-trigger{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 24px 5px 8px;color:var(--text);font-size:12px;font-family:var(--display);cursor:pointer;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.custom-select-trigger::after{content:'';position:absolute;right:8px;top:50%;transform:translateY(-50%);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:4px solid var(--text2);}
-.custom-options{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:100;background:var(--bg3);border:1px solid var(--border);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none;max-height:200px;overflow-y:auto;}
-.custom-select.open .custom-options{display:block;}
-.custom-option{padding:6px 8px;font-size:12px;color:var(--text);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.custom-option:hover{background:var(--bg4);}
-.custom-option.selected{background:var(--accent);color:#fff;}
-
-::-webkit-scrollbar{width:6px;height:6px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:var(--text3)}
 </style>
 </head>
 <body>
 <div class="layout">
   <header class="header">
     <a href="/" class="btn">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-      <span data-i18n="editor"></span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      <span data-i18n="editor">Editor</span>
+    </a>
+    <a href="/map.html" class="btn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m8 21 8 0M12 17v4"/><path d="m7 8 2 2-2 2M11 12h4"/></svg>
+      <span data-i18n="containerMap">Map</span>
+    </a>
+    <a href="/homelab.html" class="btn active">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="19" cy="19" r="3"/><circle cx="5" cy="19" r="3"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="12" y1="14" x2="19" y2="19"/><line x1="12" y1="14" x2="5" y2="19"/></svg>
+      <span data-i18n="networkMap">Network</span>
     </a>
     <div class="hcenter"></div>
     <div class="header-actions">
-      <a href="/homelab.html" class="btn active">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="19" cy="19" r="3"/><circle cx="5" cy="19" r="3"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="12" y1="14" x2="19" y2="19"/><line x1="12" y1="14" x2="5" y2="19"/></svg>
-        <span data-i18n="networkMap"></span>
-      </a>
-      <a href="/map.html" class="btn">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m8 21 8 0M12 17v4"/><path d="m7 8 2 2-2 2M11 12h4"/></svg>
-        <span data-i18n="containerMap"></span>
-      </a>
-      <div class="header-icon-btn" id="langBtn" onclick="toggleLangDropdown()" data-i18n="langLabel" data-i18n-attr="title">
+      <div class="header-icon-btn" id="langBtn" onclick="toggleLangDropdown()" title="Language" data-i18n="langLabel" data-i18n-attr="title">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
         </svg>
       </div>
-      <div class="header-icon-btn" id="themeBtn" onclick="Themes.toggle()" data-i18n="themeLabel" data-i18n-attr="title">
+      <div class="header-icon-btn" id="themeBtn" onclick="Themes.toggle()" title="Theme" data-i18n="themeLabel" data-i18n-attr="title">
         <svg class="theme-icon-dark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
         </svg>
@@ -188,73 +154,35 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
           <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
         </svg>
       </div>
-      <a class="header-icon-btn" href="https://github.com/John710/kompoz" target="_blank" rel="noopener" data-i18n="githubTooltip" data-i18n-attr="data-tooltip">
+      <a class="header-icon-btn" href="https://github.com/John710/kompoz" target="_blank" rel="noopener" data-tooltip="GitHub">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
         </svg>
       </a>
       <div class="header-profile" id="profileBlock" onclick="toggleProfileDropdown()">
         <div class="profile-avatar" id="profileAvatar">U</div>
-        <span class="profile-name" id="profileName"><span class="skeleton-text" style="display:inline-block;width:60px;height:14px;background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px;">&nbsp;</span></span>
+        <span class="profile-name" id="profileName">User</span>
         <svg class="profile-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
     </div>
   </header>
 
-<script>
-  // Load profile from localStorage immediately to prevent flicker
-  (function() {
-    const savedName = localStorage.getItem('ce-user-name');
-    const savedAvatar = localStorage.getItem('ce-user-avatar');
-    
-    const profileNameEl = document.getElementById('profileName');
-    const profileAvatarEl = document.getElementById('profileAvatar');
-    
-    if (profileNameEl && savedName) {
-      profileNameEl.textContent = savedName;
-    }
-    
-    if (profileAvatarEl) {
-      if (savedAvatar) {
-        profileAvatarEl.innerHTML = `<img src="${savedAvatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;">`;
-      } else if (savedName) {
-        profileAvatarEl.style.display = 'none';
-      }
-    }
-  })();
-</script>
-
   <div class="main">
     <div class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="19" cy="19" r="3"/><circle cx="5" cy="19" r="3"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="12" y1="14" x2="19" y2="19"/><line x1="12" y1="14" x2="5" y2="19"/></svg>
-        <span data-i18n="networkMap"></span>
+        <span data-i18n="networkMap">Network Map</span>
       </div>
 
       <div class="sidebar-section">
-        <div class="sidebar-section-title" data-i18n="scanNetwork"></div>
+        <div class="sidebar-section-title" data-i18n="scanNetwork">Scan Network</div>
         <div class="scan-row">
-          <input type="text" class="scan-input" id="scanCidr" data-i18n="cidrPlaceholder" data-i18n-attr="placeholder" value="192.168.0.0/24">
-          <button class="btn btn-primary" id="btnScan" data-i18n="scan"></button>
+          <input type="text" class="scan-input" id="scanCidr" placeholder="192.168.1.0/24" value="192.168.1.0/24">
+          <button class="btn btn-primary" id="btnScan" data-i18n="scan">Scan</button>
         </div>
         <div class="scan-row">
-          <button class="btn btn-secondary btn-sm" id="btnCheckStatus" data-i18n="checkStatus"></button>
-          <button class="btn btn-secondary btn-sm" id="btnClearPending" data-i18n="clearPending"></button>
-        </div>
-        <div class="scan-row">
-          <div class="detail-label" style="margin-bottom:0;flex:0 0 auto;" data-i18n="checkInterval"></div>
-          <div class="custom-select" id="checkInterval" data-value="0" style="flex:1;">
-            <div class="custom-select-trigger"></div>
-            <div class="custom-options">
-              <div class="custom-option selected" data-value="0" data-i18n-key="checkInterval_off"></div>
-              <div class="custom-option" data-value="30000" data-i18n-key="checkInterval_30s"></div>
-              <div class="custom-option" data-value="60000" data-i18n-key="checkInterval_1m"></div>
-              <div class="custom-option" data-value="300000" data-i18n-key="checkInterval_5m"></div>
-              <div class="custom-option" data-value="600000" data-i18n-key="checkInterval_10m"></div>
-              <div class="custom-option" data-value="1800000" data-i18n-key="checkInterval_30m"></div>
-              <div class="custom-option" data-value="3600000" data-i18n-key="checkInterval_1h"></div>
-            </div>
-          </div>
+          <button class="btn btn-secondary btn-sm" id="btnCheckStatus" data-i18n="checkStatus">Check Status</button>
+          <button class="btn btn-secondary btn-sm" id="btnClearPending" data-i18n="clearPending">Clear Pending</button>
         </div>
         <div class="scan-progress" id="scanProgress">
           <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
@@ -263,111 +191,68 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
       </div>
 
       <div class="sidebar-section" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
-        <div class="sidebar-section-title" data-i18n="pendingDevices"></div>
+        <div class="sidebar-section-title" data-i18n="pendingDevices">Pending Devices</div>
         <div class="pending-list" id="pendingList">
-          <div class="pending-empty" data-i18n="noPendingDevices"></div>
+          <div class="pending-empty" data-i18n="noPendingDevices">No pending devices</div>
         </div>
       </div>
 
       <div class="sidebar-section">
-        <div class="sidebar-section-title" data-i18n="filters"></div>
+        <div class="sidebar-section-title" data-i18n="filters">Filters</div>
         <div class="scan-row">
-          <div class="custom-select" id="filterType" data-value="all" style="flex:1;">
-            <div class="custom-select-trigger" data-i18n="allTypes"></div>
-            <div class="custom-options"></div>
-          </div>
-          <div class="custom-select" id="filterStatus" data-value="all" style="flex:1;">
-            <div class="custom-select-trigger" data-i18n="allStatus"></div>
-            <div class="custom-options">
-              <div class="custom-option selected" data-value="all" data-i18n="allStatus"></div>
-              <div class="custom-option" data-value="online" data-i18n="online"></div>
-              <div class="custom-option" data-value="offline" data-i18n="offline"></div>
-            </div>
-          </div>
+          <select class="detail-input detail-select" id="filterType" style="flex:1;">
+            <option value="all">All Types</option>
+          </select>
+          <select class="detail-input detail-select" id="filterStatus" style="flex:1;">
+            <option value="all">All Status</option>
+            <option value="online">Online</option>
+            <option value="offline">Offline</option>
+          </select>
         </div>
       </div>
 
       <div class="sidebar-section">
-        <div class="sidebar-section-title" data-i18n="actions"></div>
+        <div class="sidebar-section-title" data-i18n="actions">Actions</div>
         <div class="scan-row">
-          <button class="btn btn-secondary btn-sm" id="btnExport" data-i18n="export"></button>
-          <button class="btn btn-secondary btn-sm" id="btnImport" data-i18n="import"></button>
+          <button class="btn btn-secondary btn-sm" id="btnExport" data-i18n="export">Export</button>
+          <button class="btn btn-secondary btn-sm" id="btnImport" data-i18n="import">Import</button>
           <input type="file" id="importFile" accept=".json" style="display:none;">
         </div>
         <div class="scan-row">
-          <button class="btn btn-secondary btn-sm" id="btnAddDevice" data-i18n="addDevice"></button>
-          <button class="btn btn-secondary btn-sm" id="btnClearMap" data-i18n="clear"></button>
-        </div>
-        <div class="scan-row">
-          <button class="btn btn-secondary btn-sm" id="btnToggleHistory" data-i18n="scanHistory"></button>
+          <button class="btn btn-secondary btn-sm" id="btnToggleHistory" data-i18n="scanHistory">Scan History</button>
         </div>
         <div id="historyPanel" style="display:none;margin-top:8px;">
           <div class="pending-list" id="historyList" style="max-height:150px;">
-            <div class="pending-empty" data-i18n="noHistory"></div>
+            <div class="pending-empty">No history</div>
           </div>
         </div>
       </div>
 
       <div class="sidebar-section" id="detailPanel" style="display:none;">
-        <div class="sidebar-section-title" style="display:flex;justify-content:space-between;align-items:center;"><span data-i18n="deviceDetails"></span><button class="btn btn-secondary btn-sm" id="btnCloseDetail" style="padding:2px 8px;min-width:auto;" data-i18n="close"></button></div>
+        <div class="sidebar-section-title" data-i18n="deviceDetails">Device Details</div>
         <div class="detail-field">
-          <div class="detail-label" data-i18n="ipLabel"></div>
-          <input type="text" class="detail-input" id="detailIp">
+          <div class="detail-label">IP</div>
+          <input type="text" class="detail-input" id="detailIp" readonly>
         </div>
         <div class="detail-field">
-          <div class="detail-label" data-i18n="macLabel"></div>
+          <div class="detail-label">MAC</div>
           <input type="text" class="detail-input" id="detailMac">
         </div>
         <div class="detail-field">
-          <div class="detail-label" data-i18n="vendor"></div>
-          <input type="text" class="detail-input" id="detailVendor">
-        </div>
-        <div class="detail-field">
-          <div class="detail-label" data-i18n="name"></div>
+          <div class="detail-label" data-i18n="name">Name</div>
           <input type="text" class="detail-input" id="detailName">
         </div>
         <div class="detail-field">
-          <div class="detail-label" data-i18n="type"></div>
-          <div class="custom-select" id="detailType" data-value="unknown"><div class="custom-select-trigger" data-i18n="deviceType_unknown"></div><div class="custom-options"></div></div>
+          <div class="detail-label" data-i18n="type">Type</div>
+          <select class="detail-input detail-select" id="detailType"></select>
         </div>
         <div class="detail-field" id="detailPortsRow">
-          <div class="detail-label" data-i18n="ports"></div>
+          <div class="detail-label" data-i18n="ports">Ports</div>
           <input type="text" class="detail-input" id="detailPorts">
         </div>
-        <div class="detail-field" id="detailBannersRow" style="display:none;">
-          <div class="detail-label">Баннеры</div>
-          <textarea class="detail-input" id="detailBanners" rows="4" readonly></textarea>
-        </div>
-        <div class="detail-field">
-          <div class="detail-label">ОС</div>
-          <input type="text" class="detail-input" id="detailOs" readonly>
-        </div>
-        <div class="detail-field" id="detailMdnsRow" style="display:none;">
-          <div class="detail-label">mDNS хостнейм</div>
-          <input type="text" class="detail-input" id="detailMdns" readonly>
-        </div>
-        <div class="detail-field" id="detailNetbiosRow" style="display:none;">
-          <div class="detail-label">NetBIOS хостнейм</div>
-          <input type="text" class="detail-input" id="detailNetbios" readonly>
-        </div>
-        <div class="detail-field">
-          <div class="detail-label" data-i18n="checkMethod">Метод проверки</div>
-          <div class="custom-select" id="detailCheckMethod" data-value="ping">
-            <div class="custom-select-trigger">Ping</div>
-            <div class="custom-options">
-              <div class="custom-option selected" data-value="ping">Ping</div>
-              <div class="custom-option" data-value="tcp">TCP (порт)</div>
-              <div class="custom-option" data-value="http">HTTP</div>
-            </div>
-          </div>
-        </div>
-        <div class="detail-field" id="detailCheckTargetRow">
-          <div class="detail-label" data-i18n="checkTarget">Цель проверки</div>
-          <input type="text" class="detail-input" id="detailCheckTarget" placeholder="Порт для TCP, путь для HTTP (опционально)">
-        </div>
         <div class="scan-row" style="margin-top:8px;">
-          <button class="btn btn-primary btn-sm" id="btnSaveDevice" data-i18n="save"></button>
-          <button class="btn btn-secondary btn-sm" id="btnDeleteDevice" data-i18n="delete"></button>
+          <button class="btn btn-primary btn-sm" id="btnSaveDevice" data-i18n="save">Save</button>
+          <button class="btn btn-secondary btn-sm" id="btnDeleteDevice" data-i18n="delete">Delete</button>
         </div>
       </div>
     </div>
@@ -375,11 +260,13 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
     <div class="canvas-wrapper">
       <svg id="networkSvg"></svg>
       <div class="mini-toolbar">
-        <button id="btnZoomIn" data-i18n="zoomInTitle" data-i18n-attr="title"><span data-i18n="zoomIn"></span></button>
-        <button id="btnZoomOut" data-i18n="zoomOutTitle" data-i18n-attr="title"><span data-i18n="zoomOut"></span></button>
-        <button id="btnZoomFit" data-i18n="fit" data-i18n-attr="title"><span data-i18n="fit"></span></button>
-        <button id="btnToggleGrid" class="active" data-i18n="gridTitle" data-i18n-attr="title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg></button>
-        <button id="btnToggleLabels" class="active" data-i18n="toggleLabels" data-i18n-attr="title">Aa</button>
+        <button id="toolPan" class="active" title="Pan"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 9l4-4 4 4M9 5v14"/></svg></button>
+        <button id="toolSelect" title="Select"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg></button>
+
+        <button id="btnZoomIn" title="Zoom In">+</button>
+        <button id="btnZoomOut" title="Zoom Out">−</button>
+        <button id="btnZoomFit" title="Fit" data-i18n="fit">Fit</button>
+        <button id="btnToggleGrid" class="active" title="Grid"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg></button>
       </div>
     </div>
   </div>
@@ -392,50 +279,17 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
 <!-- Link Type Modal -->
 <div id="linkTypeModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;width:280px;box-shadow:0 16px 48px rgba(0,0,0,.5);">
-    <div style="font-weight:600;margin-bottom:12px;font-size:14px;" data-i18n="selectLinkType"></div>
-    <div class="detail-field" style="margin-bottom:12px;">
-      <div class="detail-label" data-i18n="linkLabel"></div>
-      <input type="text" class="detail-input" id="linkLabelInput" data-i18n="labelPlaceholder" data-i18n-attr="placeholder">
-    </div>
-    <div class="custom-select" id="linkTypeSelect" data-value="ethernet" style="margin-bottom:16px;">
-      <div class="custom-select-trigger" data-i18n="linkType_ethernet"></div>
-      <div class="custom-options">
-        <div class="custom-option selected" data-value="ethernet" data-i18n="linkType_ethernet"></div>
-        <div class="custom-option" data-value="wifi" data-i18n="linkType_wifi"></div>
-        <div class="custom-option" data-value="vpn" data-i18n="linkType_vpn"></div>
-        <div class="custom-option" data-value="docker" data-i18n="linkType_docker"></div>
-        <div class="custom-option" data-value="lxc" data-i18n="linkType_lxc"></div>
-        <div class="custom-option" data-value="bluetooth" data-i18n="linkType_bluetooth"></div>
-        <div class="custom-option" data-value="zigbee" data-i18n="linkType_zigbee"></div>
-        <div class="custom-option" data-value="matter" data-i18n="linkType_matter"></div>
-        <div class="custom-option" data-value="zwave" data-i18n="linkType_zwave"></div>
-        <div class="custom-option" data-value="thread" data-i18n="linkType_thread"></div>
-        <div class="custom-option" data-value="lowvoltage" data-i18n="linkType_lowvoltage"></div>
-      </div>
-    </div>
+    <div style="font-weight:600;margin-bottom:12px;font-size:14px;" data-i18n="selectLinkType">Select Link Type</div>
+    <select class="detail-input detail-select" id="linkTypeSelect" style="margin-bottom:16px;">
+      <option value="ethernet">Ethernet</option>
+      <option value="wifi">Wi-Fi</option>
+      <option value="vpn">VPN</option>
+      <option value="docker">Docker Network</option>
+      <option value="lxc">LXC Bridge</option>
+    </select>
     <div class="scan-row" style="margin-bottom:0;">
-      <button class="btn btn-secondary btn-sm" id="btnCancelLink" data-i18n="cancel"></button>
-      <button class="btn btn-primary btn-sm" id="btnConfirmLink" data-i18n="create"></button>
-    </div>
-  </div>
-</div>
-
-<!-- Link Context Menu -->
-<div id="linkContextMenu" class="context-menu" style="display:none;position:fixed;z-index:250;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px;box-shadow:0 8px 24px rgba(0,0,0,.3);">
-  <div class="context-menu-item" data-action="editLink">Редактировать</div>
-  <div class="context-menu-item" data-action="deleteLink" style="color:var(--red);">Удалить</div>
-</div>
-
-<!-- Clear Modal -->
-<div id="clearModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;width:280px;box-shadow:0 16px 48px rgba(0,0,0,.5);position:relative;">
-    <!-- Close button at top right -->
-    <button id="btnCancelClear" style="position:absolute;top:10px;right:10px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:0 4px;">×</button>
-    <div style="font-weight:600;margin-bottom:16px;font-size:14px;" data-i18n="clearTitle"></div>
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <button class="btn btn-secondary btn-sm" id="btnClearDevices" data-i18n="clearDevices"></button>
-      <button class="btn btn-secondary btn-sm" id="btnClearHistory" data-i18n="clearHistory"></button>
-      <button class="btn btn-secondary btn-sm" id="btnClearAll" data-i18n="clearAll"></button>
+      <button class="btn btn-secondary btn-sm" id="btnCancelLink" data-i18n="cancel">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="btnConfirmLink" data-i18n="create">Create</button>
     </div>
   </div>
 </div>
@@ -449,10 +303,10 @@ function toggleProfileDropdown() {
   if (!btn) return;
   const rect = btn.getBoundingClientRect();
   const html = `<div class="proj-dropdown-item" onclick="logout();document.getElementById('profileDropdown')?.remove()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
     </svg>
-    ${I18N.t('logout')}
+    Logout
   </div>`;
   const dd = document.createElement('div');
   dd.id = 'profileDropdown';
@@ -477,35 +331,17 @@ function toggleProfileDropdown() {
 }
 async function logout() {
   try { await fetch('/api/logout', { method: 'POST' }); } catch {}
-  localStorage.removeItem('ce-user-name');
-  localStorage.removeItem('ce-user-avatar');
   window.location.href = '/login.html';
 }
 async function loadUser() {
-  const savedName = localStorage.getItem('ce-user-name');
-  const savedAvatar = localStorage.getItem('ce-user-avatar');
-  if (savedName) {
-    const el = document.getElementById('profileName');
-    if (el) el.textContent = savedName;
-  }
-  const av = document.getElementById('profileAvatar');
-  if (av) {
-    if (savedAvatar) {
-      av.style.display = '';
-      av.innerHTML = `<img src="${savedAvatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;">`;
-    } else if (savedName) {
-      av.style.display = 'none';
-    }
-  }
   try {
     const r = await fetch('/api/me', { cache: 'no-store' });
     if (!r.ok) return;
     const d = await r.json();
     if (d.enabled && d.user) {
-      localStorage.setItem('ce-user-name', d.user.name || '');
-      localStorage.setItem('ce-user-avatar', d.user.avatar || '');
       const el = document.getElementById('profileName');
       if (el) el.textContent = d.user.name;
+      const av = document.getElementById('profileAvatar');
       if (av) {
         if (d.user.avatar) {
           av.style.display = '';
@@ -518,6 +354,9 @@ async function loadUser() {
   } catch {}
 }
 </script>
+<script src="js/i18n.js"></script>
+<script src="js/themes.js"></script>
+<script src="js/network-icons.js"></script>
 <script src="js/network-canvas.js"></script>
 <script src="js/network-sidebar.js"></script>
 <script src="js/homelab.js"></script>

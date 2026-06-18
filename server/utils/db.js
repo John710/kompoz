@@ -67,11 +67,6 @@ async function initDatabase() {
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
   )`);
-  await query(`ALTER TABLE network_devices ADD COLUMN IF NOT EXISTS vendor VARCHAR(255);`);
-  await query(`ALTER TABLE network_devices ADD COLUMN IF NOT EXISTS os VARCHAR(100);`);
-  await query(`ALTER TABLE network_devices ADD COLUMN IF NOT EXISTS banners JSONB DEFAULT '{}';`);
-  await query(`ALTER TABLE network_devices ADD COLUMN IF NOT EXISTS hostname_mdns VARCHAR(255);`);
-  await query(`ALTER TABLE network_devices ADD COLUMN IF NOT EXISTS hostname_netbios VARCHAR(255);`);
 
   await query(`CREATE TABLE IF NOT EXISTS network_links (
     id SERIAL PRIMARY KEY,
@@ -79,15 +74,8 @@ async function initDatabase() {
     target_id INTEGER NOT NULL REFERENCES network_devices(id) ON DELETE CASCADE,
     type VARCHAR(20) DEFAULT 'ethernet',
     label VARCHAR(100),
-    waypoints JSONB DEFAULT '[]',
-    source_pos VARCHAR(20),
-    target_pos VARCHAR(20),
     created_at TIMESTAMP DEFAULT NOW()
   )`);
-  
-  await query(`ALTER TABLE network_links ADD COLUMN IF NOT EXISTS waypoints JSONB DEFAULT '[]'`);
-  await query(`ALTER TABLE network_links ADD COLUMN IF NOT EXISTS source_pos VARCHAR(20)`);
-  await query(`ALTER TABLE network_links ADD COLUMN IF NOT EXISTS target_pos VARCHAR(20)`);
 
   await query(`CREATE TABLE IF NOT EXISTS network_scan_history (
     id SERIAL PRIMARY KEY,

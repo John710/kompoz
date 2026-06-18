@@ -55,6 +55,11 @@ const App = (() => {
     Editor.showEditor(false);
     await loadFiles();
     RightPanel.render();
+    const urlFile = new URLSearchParams(location.search).get('file');
+    if (urlFile) {
+      const f = State.allFiles.find(x => x.path === urlFile);
+      if (f) openFile(f.path, f.name, f.type);
+    }
   }
 
   function _renderProjectSelector() {
@@ -293,12 +298,16 @@ const App = (() => {
     window.location.href = `/map.html?project=${encodeURIComponent(State.currentProject)}`;
   }
 
+  function openNetworkMap() {
+    window.location.href = `/homelab.html`;
+  }
+
   function _esc(s) { return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 
   return {
     init, switchProject, toggleProjectDropdown, toggleLangDropdown, confirmDeleteProject, deleteProject,
     loadFiles, filterFiles, openFile, setActiveTab, closeTab,
-    saveCurrentFile, restoreBackup, copyAll, confirmDeleteFile, openMap,
+    saveCurrentFile, restoreBackup, copyAll, confirmDeleteFile, openMap, openNetworkMap,
     onEditorChange
   };
 })();

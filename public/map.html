@@ -1,41 +1,49 @@
 <!DOCTYPE html>
-<html lang="ru" data-theme="dark">
+<html lang="ru">
 <head>
+<script>(function(){var t=localStorage.getItem('ce-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
+<script>
+  // Initialize i18n immediately to prevent flash of English text
+  (function() {
+    const savedLang = localStorage.getItem('ce-lang') || 'en';
+    document.documentElement.lang = savedLang;
+  })();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="containerMap">Container Map</title>
+<title data-i18n="containerMap"></title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b8cff' stroke-width='2'><rect x='2' y='3' width='20' height='14' rx='2'/><path d='m8 21 8 0M12 17v4'/><path d='m7 8 2 2-2 2M11 12h4'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/header.css">
+<script src="js/i18n.js"></script>
+<script src="js/themes.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
+:root[data-theme="dark"] {
   --bg:#0d0f14; --bg2:#13161e; --bg3:#1a1e2a; --bg4:#222736;
   --border:#2a3045; --accent:#5b8cff; --accent2:#3d6aff;
   --green:#3dffa0; --red:#ff5b5b; --yellow:#ffd95b; --purple:#c084fc;
   --text:#e2e8f8; --text2:#8892aa; --text3:#4a5468;
   --mono:'JetBrains Mono',monospace; --display:'Inter',sans-serif;
-  --map-net-fill:#0f2a1f; --map-vol-fill:#2a1e35;
-}
-html[data-theme="light"] {
-  --map-net-fill:#e6f4ea; --map-vol-fill:#f3e8fd;
-}
+  --map-net-fill:#0f2a1f; --map-vol-fill:#2a1e35;;
+  --panel:#1a1e2a;}
+:root[data-theme="light"] {
+  --bg:#ffffff; --bg2:#f6f8fa; --bg3:#eaeef2; --bg4:#e1e4e8;
+  --border:#d0d7de; --accent:#0969da; --accent2:#0550ae;
+  --green:#1a7f37; --red:#cf222e; --yellow:#9a6700; --purple:#8250df;
+  --text:#24292f; --text2:#57606a; --text3:#8c959f;
+  --mono:'JetBrains Mono',monospace; --display:'Inter',sans-serif;
+  --map-net-fill:#e6f4ea; --map-vol-fill:#f3e8fd;;
+  --panel:#ffffff;}
+
+body { visibility: hidden; }
 html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:var(--display); }
 .layout { display:grid; grid-template-rows:52px 1fr; height:100vh; }
 
-/* Header */
-.header { display:flex; align-items:center; gap:12px; padding:0 16px; background:var(--bg2); border-bottom:1px solid var(--border); }
-.header-logo { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:700; color:var(--text); }
-.header-logo svg { color:var(--accent); }
-.btn { display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border-radius:7px; border:1px solid var(--border); background:transparent; color:var(--text2); font-family:var(--display); font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; }
-.btn:hover { background:var(--bg3); color:var(--text); }
-.hcenter { flex:1; display:flex; align-items:center; gap:8px; }
+/* Additional header elements for map page */
 .proj-label { font-family:var(--mono); font-size:11px; color:var(--text3); }
 .proj-name  { font-family:var(--mono); font-size:12px; color:var(--text2); }
-.header-actions { display:flex; gap:8px; align-items:center; }
-.header-icon-btn { display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text2); cursor:pointer; transition:all .15s; }
-.header-icon-btn:hover { background:var(--bg3); color:var(--text); }
 
 /* Legend */
 .legend { display:flex; gap:12px; }
@@ -52,109 +60,100 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
 .spinner { width:20px; height:20px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .6s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
 
-/* Tooltip */
-[data-tooltip] { position: relative; }
-[data-tooltip]::before,
-[data-tooltip]::after {
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+.tooltip { position:fixed; background:var(--bg2); border:1px solid var(--border); border-radius:6px; padding:8px 12px; font-size:12px; pointer-events:none; opacity:0; transition:opacity .15s; z-index:1000; box-shadow:0 4px 12px rgba(0,0,0,.3); }
+.tooltip.vis { opacity:1; }
+.context-menu { position:fixed; background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:4px; z-index:1000; min-width:160px; box-shadow:0 8px 24px rgba(0,0,0,.4); display:none; }
+.context-menu-item { padding:6px 10px; border-radius:4px; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:8px; color:var(--text); }
+.context-menu-item:hover { background:var(--bg3); }
+.context-menu-sep { height:1px; background:var(--border); margin:4px 0; }
+/* Filter bar styles */
+.filter-bar {
   position: absolute;
+  bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .1s;
-}
-[data-tooltip]::after {
-  content: attr(data-tooltip);
-  top: calc(100% + 6px);
+  display: flex;
+  gap: 8px;
+  align-items: center;
   padding: 6px 10px;
-  background: var(--bg3);
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 11px;
-  border-radius: 6px;
-  white-space: nowrap;
+  background: var(--bg2);
   border: 1px solid var(--border);
+  border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,.3);
-  z-index: 1000;
 }
-[data-tooltip]::before {
-  content: '';
-  top: calc(100% + 1px);
-  border-width: 5px;
-  border-style: solid;
-  border-color: transparent transparent var(--border) transparent;
-}
-[data-tooltip]:hover::before,
-[data-tooltip]:hover::after {
-  opacity: 1;
-}
-
-/* Profile */
-.header-profile {
+.fbtn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 10px;
-  height: 34px;
-  border-radius: 8px;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text2);
-  cursor: pointer;
-  transition: all .15s;
   font-family: var(--display);
   font-size: 12px;
   font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
 }
-.header-profile:hover { background: var(--bg3); color: var(--text); }
-.profile-avatar {
-  width: 22px;
-  height: 22px;
+.fbtn:hover {
+  background: var(--bg3);
+  color: var(--text);
+}
+.fbtn.on {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(88, 166, 255, 0.1);
+}
+.fdot {
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
+  flex-shrink: 0;
 }
-.profile-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.profile-chevron { color: var(--text3); transition: transform .15s; }
-.header-profile:hover .profile-chevron { transform: rotate(180deg); }
-.proj-dropdown { position:fixed; z-index:200; background:var(--bg3); border:1px solid var(--border); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.4); overflow:hidden; animation:fadeDown .15s ease; }
-.proj-dropdown-item { display:flex; align-items:center; gap:8px; padding:9px 12px; cursor:pointer; font-family:var(--mono); font-size:12px; color:var(--text2); transition:background .1s; }
-.proj-dropdown-item:hover { background:var(--bg4); color:var(--text); }
-.proj-dropdown-item.active { color:var(--accent); }
+.fsep {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+}
+.fcount {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+}
 </style>
 
 </head>
 <body>
 <div class="layout">
   <header class="header">
-    <button class="btn" onclick="history.back()">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-      <span data-i18n="back">Назад</span>
-    </button>
-    <div class="header-logo">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="5" r="3"/><circle cx="19" cy="19" r="3"/><circle cx="5" cy="19" r="3"/>
-        <line x1="12" y1="8" x2="12" y2="14"/><line x1="12" y1="14" x2="19" y2="19"/><line x1="12" y1="14" x2="5" y2="19"/>
-      </svg>
-      <span data-i18n="containerMap">Container Map</span>
-    </div>
+    <a href="/" class="btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      <span data-i18n="editor"></span>
+    </a>
     <div class="hcenter">
-      <span class="proj-label" data-i18n="projectLabel">проект:</span>
+      <span class="proj-label" data-i18n="projectLabel"></span>
       <span class="proj-name" id="projLabel">—</span>
     </div>
     <div class="header-actions">
-      <button class="btn" onclick="resetZoom()" data-i18n="center">⊞ По центру</button>
-      <div class="header-icon-btn" id="langBtn" onclick="toggleLangDropdown()" title="" data-i18n="langLabel" data-i18n-attr="title">
+      <a href="/homelab.html" class="btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="19" cy="19" r="3"/><circle cx="5" cy="19" r="3"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="12" y1="14" x2="19" y2="19"/><line x1="12" y1="14" x2="5" y2="19"/></svg>
+        <span data-i18n="networkMap"></span>
+      </a>
+      <a href="/map.html" class="btn active">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m8 21 8 0M12 17v4"/><path d="m7 8 2 2-2 2M11 12h4"/></svg>
+        <span data-i18n="containerMap"></span>
+      </a>
+      <div class="header-icon-btn" id="langBtn" onclick="toggleLangDropdown()" data-i18n="langLabel" data-i18n-attr="title">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
         </svg>
       </div>
-      <div class="header-icon-btn" id="themeBtn" onclick="Themes.toggle()" title="" data-i18n="themeLabel" data-i18n-attr="title">
+      <div class="header-icon-btn" id="themeBtn" onclick="Themes.toggle()" data-i18n="themeLabel" data-i18n-attr="title">
         <svg class="theme-icon-dark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
         </svg>
@@ -162,36 +161,60 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
           <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
         </svg>
       </div>
-      <a class="header-icon-btn" href="https://github.com/John710/kompoz" target="_blank" rel="noopener" data-tooltip="GitHub">
+      <a class="header-icon-btn" href="https://github.com/John710/kompoz" target="_blank" rel="noopener" data-i18n="githubTooltip" data-i18n-attr="data-tooltip">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
         </svg>
       </a>
       <div class="header-profile" id="profileBlock" onclick="toggleProfileDropdown()">
         <div class="profile-avatar" id="profileAvatar">U</div>
-        <span class="profile-name" id="profileName">User</span>
+        <span class="profile-name" id="profileName"><span class="skeleton-text" style="display:inline-block;width:60px;height:14px;background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px;">&nbsp;</span></span>
         <svg class="profile-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
     </div>
   </header>
 
+<script>
+  // Load profile from localStorage immediately to prevent flicker
+  (function() {
+    const savedName = localStorage.getItem('ce-user-name');
+    const savedAvatar = localStorage.getItem('ce-user-avatar');
+    
+    const profileNameEl = document.getElementById('profileName');
+    const profileAvatarEl = document.getElementById('profileAvatar');
+    
+    if (profileNameEl && savedName) {
+      profileNameEl.textContent = savedName;
+    }
+    
+    if (profileAvatarEl) {
+      if (savedAvatar) {
+        profileAvatarEl.innerHTML = `<img src="${savedAvatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;">`;
+      } else if (savedName) {
+        profileAvatarEl.style.display = 'none';
+      }
+    }
+  })();
+</script>
+
   <div class="canvas-wrap">
     <svg id="mapSvg"></svg>
-    <div class="overlay" id="overlay"><div class="spinner"></div><span data-i18n="loadingMap">Загрузка...</span></div>
-    <div class="tooltip" id="tooltip"></div>
+    <div class="overlay" id="overlay"><div class="spinner"></div><span data-i18n="loadingMap"></span></div>
     <div class="filter-bar">
-      <button class="fbtn on" id="fSvc" onclick="toggleFilter('svc')"><div class="fdot" style="background:var(--accent)"></div><span data-i18n="services">Сервисы</span></button>
-      <button class="fbtn on" id="fNet" onclick="toggleFilter('net')"><div class="fdot" style="background:var(--green)"></div><span data-i18n="networks">Сети</span></button>
-      <button class="fbtn on" id="fVol" onclick="toggleFilter('vol')"><div class="fdot" style="background:var(--purple)"></div><span data-i18n="volumes">Volumes</span></button>
+      <button class="fbtn on" id="fSvc" onclick="toggleFilter('svc')"><div class="fdot" style="background:var(--accent)"></div><span data-i18n="services"></span></button>
+      <button class="fbtn on" id="fNet" onclick="toggleFilter('net')"><div class="fdot" style="background:var(--green)"></div><span data-i18n="networks"></span></button>
+      <button class="fbtn on" id="fVol" onclick="toggleFilter('vol')"><div class="fdot" style="background:var(--purple)"></div><span data-i18n="volumes"></span></button>
+      <div class="fsep"></div>
+      <button class="fbtn" onclick="resetZoom()" data-i18n="center"></button>
       <div class="fsep"></div>
       <span class="fcount" id="fcount"></span>
     </div>
   </div>
+  <div class="tooltip" id="tooltip"></div>
+  <div class="context-menu" id="contextMenu"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
-<script src="/js/themes.js"></script>
-<script src="/js/i18n.js"></script>
 <script src="/js/parser.js"></script>
 <script>
 const project = new URLSearchParams(location.search).get('project') || localStorage.getItem('lastProject');
@@ -378,10 +401,9 @@ function renderTree() {
       nodeSel.style('opacity', 1);
       linkGroup.selectAll('line').attr('stroke-opacity', 0.35).attr('stroke-width', 1.2);
     })
-    .on('click', (ev, d) => {
-      if (confirm(I18N.t('openInEditor'))) {
-        location.href = '/editor.html?project=' + encodeURIComponent(project);
-      }
+    .on('contextmenu', (ev, d) => {
+      ev.preventDefault();
+      showContextMenu(ev, d);
     });
 
   nodeSel.each(function(d) {
@@ -474,9 +496,10 @@ function showPortTip(event, ports) {
 
 function moveTip(event) {
   const tt = document.getElementById('tooltip');
-  const x = event.pageX + 14;
-  const y = event.pageY + 14;
-  tt.style.left = Math.min(x, window.innerWidth  - 270) + 'px';
+  const x = event.clientX + 15;
+  const y = event.clientY + 15;
+  // Ограничиваем, чтобы не выходило за экран
+  tt.style.left = Math.min(x, window.innerWidth - 270) + 'px';
   tt.style.top  = Math.min(y, window.innerHeight - 160) + 'px';
 }
 function hideTip() { document.getElementById('tooltip').classList.remove('vis'); }
@@ -564,19 +587,37 @@ async function checkUpdate() {
 
 async function logout() {
   try { await fetch('/api/logout', { method: 'POST' }); } catch {}
+  localStorage.removeItem('ce-user-name');
+  localStorage.removeItem('ce-user-avatar');
   window.location.href = '/login.html';
 }
 
 
 async function loadUser() {
+  const savedName = localStorage.getItem('ce-user-name');
+  const savedAvatar = localStorage.getItem('ce-user-avatar');
+  if (savedName) {
+    const el = document.getElementById('profileName');
+    if (el) el.textContent = savedName;
+  }
+  const av = document.getElementById('profileAvatar');
+  if (av) {
+    if (savedAvatar) {
+      av.style.display = '';
+      av.innerHTML = `<img src="${savedAvatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;">`;
+    } else if (savedName) {
+      av.style.display = 'none';
+    }
+  }
   try {
     const r = await fetch('/api/me', { cache: 'no-store' });
     if (!r.ok) return;
     const d = await r.json();
     if (d.enabled && d.user) {
+      localStorage.setItem('ce-user-name', d.user.name || '');
+      localStorage.setItem('ce-user-avatar', d.user.avatar || '');
       const el = document.getElementById('profileName');
       if (el) el.textContent = d.user.name;
-      const av = document.getElementById('profileAvatar');
       if (av) {
         if (d.user.avatar) {
           av.style.display = '';
@@ -598,10 +639,10 @@ function toggleProfileDropdown() {
   const rect = btn.getBoundingClientRect();
 
   const html = `<div class="proj-dropdown-item" onclick="logout();document.getElementById('profileDropdown')?.remove()">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
     </svg>
-    Logout
+    ${I18N.t('logout')}
   </div>`;
 
   const dd = document.createElement('div');
@@ -629,6 +670,26 @@ function toggleProfileDropdown() {
   }, 0);
 }
 
+function showContextMenu(ev, d) {
+  const menu = document.getElementById('contextMenu');
+  menu.style.display = 'block';
+  menu.style.left = ev.clientX + 'px';
+  menu.style.top = ev.clientY + 'px';
+  menu.innerHTML = `<div class="context-menu-item" data-action="editor">${I18N.t('openInEditorBtn')}</div>`;
+  menu.querySelectorAll('.context-menu-item').forEach(el => {
+    el.addEventListener('click', () => {
+      menu.style.display = 'none';
+      if (el.dataset.action === 'editor') {
+        let url = '/editor.html?project=' + encodeURIComponent(project);
+        if (d.sourceFile) url += '&file=' + encodeURIComponent(d.sourceFile);
+        location.href = url;
+      }
+    });
+  });
+}
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.context-menu')) document.getElementById('contextMenu').style.display = 'none';
+});
 </script>
 </body>
 </html>

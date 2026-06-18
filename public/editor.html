@@ -1,9 +1,17 @@
 <!DOCTYPE html>
-<html lang="ru" data-theme="dark">
+<html lang="ru">
 <head>
+<script>(function(){var t=localStorage.getItem('ce-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
+<script>
+  // Initialize i18n immediately to prevent flash of English text
+  (function() {
+    const savedLang = localStorage.getItem('ce-lang') || 'en';
+    document.documentElement.lang = savedLang;
+  })();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="appTitle">Kompoz</title>
+<title data-i18n="appTitle"></title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b8cff' stroke-width='2'><rect x='2' y='3' width='20' height='14' rx='2'/><path d='m8 21 8 0M12 17v4'/><path d='m7 8 2 2-2 2M11 12h4'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,6 +21,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/lint/lint.min.css">
 <link rel="stylesheet" href="/css/main.css">
 <link rel="stylesheet" href="/css/header.css">
+<script src="js/i18n.js"></script>
+<script src="js/themes.js"></script>
 <style>
 .sidebar-delete-btn {
   display: flex; align-items: center; justify-content: center;
@@ -29,6 +39,11 @@
 }
 .proj-dropdown-item:hover .proj-delete { opacity: 1; }
 .proj-delete:hover { background: rgba(255,91,91,.12); color: var(--red); }
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
 </style>
 </head>
 <body>
@@ -42,33 +57,39 @@
         <path d="m8 21 8 0M12 17v4"/>
         <path d="m7 8 2 2-2 2M11 12h4"/>
       </svg>
-      <span data-i18n="appTitle">Kompoz</span>
+      <span data-i18n="appTitle"></span>
     </div>
 
     <div class="project-selector" id="projectSelector" onclick="App.toggleProjectDropdown()">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
       </svg>
-      <span class="proj-name" id="projectSelectorName">Загрузка...</span>
+      <span class="proj-name" id="projectSelectorName"></span>
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <polyline points="6 9 12 15 18 9"/>
       </svg>
     </div>
 
       <div class="header-actions">
-    <button class="btn" onclick="App.openMap()" style="height:34px;gap:6px;">
+    <button class="btn" onclick="App.openNetworkMap()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="5" r="3"/><circle cx="19" cy="19" r="3"/><circle cx="5" cy="19" r="3"/>
         <line x1="12" y1="8" x2="12" y2="14"/><line x1="12" y1="14" x2="19" y2="19"/><line x1="12" y1="14" x2="5" y2="19"/>
       </svg>
-      <span data-i18n="map">Карта</span>
+      <span data-i18n="networkMap"></span>
     </button>
-    <div class="header-icon-btn" id="langBtn" onclick="toggleLangDropdown()" data-tooltip="Language">
+    <button class="btn" onclick="App.openMap()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="3" width="20" height="14" rx="2"/><path d="m8 21 8 0M12 17v4"/><path d="m7 8 2 2-2 2M11 12h4"/>
+      </svg>
+      <span data-i18n="containerMap"></span>
+    </button>
+    <div class="header-icon-btn" id="langBtn" onclick="toggleLangDropdown()" data-i18n="langLabel" data-i18n-attr="data-tooltip">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
       </svg>
     </div>
-    <div class="header-icon-btn" id="themeBtn" onclick="Themes.toggle()" data-tooltip="Theme">
+    <div class="header-icon-btn" id="themeBtn" onclick="Themes.toggle()" data-i18n="themeLabel" data-i18n-attr="data-tooltip">
       <svg class="theme-icon-dark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
       </svg>
@@ -76,18 +97,41 @@
         <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
       </svg>
     </div>
-    <a class="header-icon-btn" href="https://github.com/John710/kompoz" target="_blank" rel="noopener" data-tooltip="GitHub">
+    <a class="header-icon-btn" href="https://github.com/John710/kompoz" target="_blank" rel="noopener" data-i18n="githubTooltip" data-i18n-attr="data-tooltip">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
       </svg>
     </a>
     <div class="header-profile" id="profileBlock" onclick="toggleProfileDropdown()">
       <div class="profile-avatar" id="profileAvatar">U</div>
-      <span class="profile-name" id="profileName">User</span>
+      <span class="profile-name" id="profileName"><span class="skeleton-text" style="display:inline-block;width:60px;height:14px;background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px;">&nbsp;</span></span>
       <svg class="profile-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
   </div>
 </header>
+
+<script>
+  // Load profile from localStorage immediately to prevent flicker
+  (function() {
+    const savedName = localStorage.getItem('ce-user-name');
+    const savedAvatar = localStorage.getItem('ce-user-avatar');
+    
+    const profileNameEl = document.getElementById('profileName');
+    const profileAvatarEl = document.getElementById('profileAvatar');
+    
+    if (profileNameEl && savedName) {
+      profileNameEl.textContent = savedName;
+    }
+    
+    if (profileAvatarEl) {
+      if (savedAvatar) {
+        profileAvatarEl.innerHTML = `<img src="${savedAvatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;">`;
+      } else if (savedName) {
+        profileAvatarEl.style.display = 'none';
+      }
+    }
+  })();
+</script>
 
   <!-- ── Sidebar ── -->
   <aside class="sidebar">
@@ -96,15 +140,15 @@
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M12 5v14M5 12h14"/>
         </svg>
-        <span data-i18n="newFile">Новый файл</span>
+        <span data-i18n="newFile"></span>
       </button>
       <div class="sidebar-search">
-        <input type="text" placeholder="Поиск..." id="searchInput" oninput="App.filterFiles(this.value)" data-i18n="searchPlaceholder" data-i18n-attr="placeholder">
+        <input type="text" id="searchInput" oninput="App.filterFiles(this.value)" data-i18n="searchPlaceholder" data-i18n-attr="placeholder">
       </div>
     </div>
 
     <div class="sidebar-files" id="fileList">
-      <div class="loading"><div class="spinner"></div><span data-i18n="loading">Загрузка...</span></div>
+      <div class="loading"><div class="spinner"></div><span data-i18n="loading"></span></div>
     </div>
 
     <div class="sidebar-footer">
@@ -118,17 +162,17 @@
           <line x1="12" y1="17" x2="12.01" y2="17"/>
         </svg>
         <div class="legend-popup" id="legendPopup">
-          <div class="legend-popup-title" data-i18n="fileTypesTitle">Типы файлов</div>
-          <div class="legend-row"><div class="leg-dot" style="background:var(--root-tag)"></div><span data-i18n="legendRoot">root — главный compose</span></div>
-          <div class="legend-row"><div class="leg-dot" style="background:var(--comp-tag)"></div><span data-i18n="legendCompose">compose/ — сервисный файл</span></div>
-          <div class="legend-row"><div class="leg-dot" style="background:var(--yellow)"></div><span data-i18n="legendEnv">.env — переменные</span></div>
-          <div class="legend-row"><div class="leg-dot" style="background:var(--purple)"></div><span data-i18n="legendAppdata">appdata/ — конфиги</span></div>
-          <div class="legend-row"><div class="leg-dot" style="background:var(--red)"></div><span data-i18n="legendSecret">secrets/ — секреты</span></div>
-          <div class="legend-popup-title" style="margin-top:8px" data-i18n="statusTitle">Статус</div>
-          <div class="legend-row"><span style="color:var(--accent);font-size:9px">●</span> <span data-i18n="unsavedChanges">несохранённые изменения</span></div>
+          <div class="legend-popup-title" data-i18n="fileTypesTitle"></div>
+          <div class="legend-row"><div class="leg-dot" style="background:var(--root-tag)"></div><span data-i18n="legendRoot"></span></div>
+          <div class="legend-row"><div class="leg-dot" style="background:var(--comp-tag)"></div><span data-i18n="legendCompose"></span></div>
+          <div class="legend-row"><div class="leg-dot" style="background:var(--yellow)"></div><span data-i18n="legendEnv"></span></div>
+          <div class="legend-row"><div class="leg-dot" style="background:var(--purple)"></div><span data-i18n="legendAppdata"></span></div>
+          <div class="legend-row"><div class="leg-dot" style="background:var(--red)"></div><span data-i18n="legendSecret"></span></div>
+          <div class="legend-popup-title" style="margin-top:8px" data-i18n="statusTitle"></div>
+          <div class="legend-row"><span style="color:var(--accent);font-size:9px">●</span> <span data-i18n="unsavedChanges"></span></div>
         </div>
         </div>
-        <div class="sidebar-delete-btn" id="deleteProjectBtn" onclick="App.confirmDeleteProject()" data-tooltip="Delete project" data-i18n="deleteProjectMenu" data-i18n-attr="title" title="">
+        <div class="sidebar-delete-btn" id="deleteProjectBtn" onclick="App.confirmDeleteProject()" data-i18n="deleteProjectMenu" data-i18n-attr="data-tooltip">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="3 6 5 6 21 6"/>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -153,14 +197,14 @@
           <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
           <path d="M3 3v5h5"/>
         </svg>
-        <span data-i18n="rollback">Откат</span>
+        <span data-i18n="rollback"></span>
       </button>
       <button class="btn btn-ghost btn-sm" onclick="App.copyAll()">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <rect x="9" y="9" width="13" height="13" rx="2"/>
           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
         </svg>
-        <span data-i18n="copy">Копировать</span>
+        <span data-i18n="copy"></span>
       </button>
       <button class="btn btn-primary btn-sm" id="saveBtn" onclick="App.saveCurrentFile()" disabled>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -168,7 +212,7 @@
           <polyline points="17 21 17 13 7 13 7 21"/>
           <polyline points="7 3 7 8 15 8"/>
         </svg>
-        <span data-i18n="save">Сохранить</span>
+        <span data-i18n="save"></span>
       </button>
     </div>
 
@@ -179,8 +223,8 @@
         <line x1="16" y1="13" x2="8" y2="13"/>
         <line x1="16" y1="17" x2="8" y2="17"/>
       </svg>
-      <p data-i18n="selectFile">Выберите файл для редактирования</p>
-      <small data-i18n="orCreateNew">или создайте новый</small>
+      <p data-i18n="selectFile"></p>
+      <small data-i18n="orCreateNew"></small>
     </div>
 
     <div class="editor-wrap" id="editorWrap" style="display:none">
@@ -203,9 +247,9 @@
     <div class="resizer" id="rightResizer" title="" data-i18n="resizeTooltip" data-i18n-attr="title"></div>
     <div class="rp-tabs" id="rightPanelTabs"></div>
     <div class="rp-body" id="rightPanelBody">
-      <div class="rp-empty" data-i18n="loading">Загрузка...</div>
+      <div class="rp-empty" data-i18n="loading"></div>
     </div>
-    <div class="rp-footer" data-i18n-html="rpFooter">Нажмите на элемент<br>чтобы вставить в курсор</div>
+    <div class="rp-footer" data-i18n-html="rpFooter"></div>
   </aside>
 
 </div><!-- .app -->
@@ -213,29 +257,29 @@
 <!-- ── New File Modal ── -->
 <div class="modal-overlay" id="newFileModal">
   <div class="modal">
-    <h3 data-i18n="newFileTitle">Новый файл</h3>
+    <h3 data-i18n="newFileTitle"></h3>
     <div class="modal-field">
-      <label data-i18n="typeLocation">Тип / расположение</label>
+      <label data-i18n="typeLocation"></label>
       <select id="newFileLocation">
-        <option value="compose" data-i18n="optionCompose">compose/ — сервисный файл</option>
-        <option value="root" data-i18n="optionRoot">root — главный docker-compose</option>
-        <option value="env" data-i18n="optionEnv">.env — переменные окружения</option>
-        <option value="appdata" data-i18n="optionAppdata">appdata/ — конфиг приложения</option>
-        <option value="secret" data-i18n="optionSecret">secrets/ — секрет</option>
+        <option value="compose" data-i18n="optionCompose"></option>
+        <option value="root" data-i18n="optionRoot"></option>
+        <option value="env" data-i18n="optionEnv"></option>
+        <option value="appdata" data-i18n="optionAppdata"></option>
+        <option value="secret" data-i18n="optionSecret"></option>
       </select>
     </div>
     <div class="modal-field" id="newFileNameField">
-      <label data-i18n="fileName">Имя файла</label>
-      <input type="text" id="newFileName" placeholder="myservice.yml"
+      <label data-i18n="fileName"></label>
+      <input type="text" id="newFileName" data-i18n="fileNamePlaceholder" data-i18n-attr="placeholder"
         onkeydown="if(event.key==='Enter')Modals.submitNewFile()">
     </div>
     <div class="modal-field">
-      <label data-i18n="fullPath">Полный путь</label>
+      <label data-i18n="fullPath"></label>
       <input type="text" id="newFilePath" readonly>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="document.getElementById('newFileModal').classList.remove('open')" data-i18n="cancel">Отмена</button>
-      <button class="btn btn-primary" onclick="Modals.submitNewFile()" data-i18n="create">Создать</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('newFileModal').classList.remove('open')" data-i18n="cancel"></button>
+      <button class="btn btn-primary" onclick="Modals.submitNewFile()" data-i18n="create"></button>
     </div>
   </div>
 </div>
@@ -243,15 +287,15 @@
 <!-- ── New Project Modal ── -->
 <div class="modal-overlay" id="newProjectModal">
   <div class="modal">
-    <h3 data-i18n="newProjectTitle">Новый проект</h3>
+    <h3 data-i18n="newProjectTitle"></h3>
     <div class="modal-field">
-      <label data-i18n="projectNameLabel">Название (латиница, цифры, _ -)</label>
-      <input type="text" id="newProjectName" placeholder="my-project"
+      <label data-i18n="projectNameLabel"></label>
+      <input type="text" id="newProjectName" data-i18n="newProjectNamePlaceholder" data-i18n-attr="placeholder"
         onkeydown="if(event.key==='Enter')Modals.submitNewProject()">
     </div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="document.getElementById('newProjectModal').classList.remove('open')" data-i18n="cancel">Отмена</button>
-      <button class="btn btn-primary" onclick="Modals.submitNewProject()" data-i18n="create">Создать</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('newProjectModal').classList.remove('open')" data-i18n="cancel"></button>
+      <button class="btn btn-primary" onclick="Modals.submitNewProject()" data-i18n="create"></button>
     </div>
   </div>
 </div>
@@ -262,12 +306,12 @@
     <div class="confirm-title" id="confirmTitle"></div>
     <p id="confirmMessage"></p>
     <div class="modal-field" id="confirmPasswordField" style="display:none;">
-      <label data-i18n="confirmPasswordLabel">Введите пароль для подтверждения</label>
-      <input type="password" id="confirmPasswordInput" placeholder="••••••" onkeydown="if(event.key==='Enter')Modals.closeConfirm(true)">
+      <label data-i18n="confirmPasswordLabel"></label>
+      <input type="password" id="confirmPasswordInput" data-i18n="passwordPlaceholder" data-i18n-attr="placeholder" onkeydown="if(event.key==='Enter')Modals.closeConfirm(true)">
     </div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="Modals.closeConfirm(false)" data-i18n="cancel">Отмена</button>
-      <button class="btn" id="confirmOkBtn" style="color:var(--red);border-color:var(--red)" onclick="Modals.closeConfirm(true)" data-i18n="confirmBtn">Подтвердить</button>
+      <button class="btn btn-ghost" onclick="Modals.closeConfirm(false)" data-i18n="cancel"></button>
+      <button class="btn" id="confirmOkBtn" style="color:var(--red);border-color:var(--red)" onclick="Modals.closeConfirm(true)" data-i18n="confirmBtn"></button>
     </div>
   </div>
 </div>
@@ -286,8 +330,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/lint/lint.min.js"></script>
 
 <!-- App scripts -->
-<script src="/js/i18n.js"></script>
-<script src="/js/themes.js"></script>
 <script src="/js/state.js"></script>
 <script src="/js/toast.js"></script>
 <script src="/js/api.js"></script>
@@ -423,19 +465,37 @@ async function checkUpdate() {
 
 async function logout() {
   try { await fetch('/api/logout', { method: 'POST' }); } catch {}
+  localStorage.removeItem('ce-user-name');
+  localStorage.removeItem('ce-user-avatar');
   window.location.href = '/login.html';
 }
 
 
 async function loadUser() {
+  const savedName = localStorage.getItem('ce-user-name');
+  const savedAvatar = localStorage.getItem('ce-user-avatar');
+  if (savedName) {
+    const el = document.getElementById('profileName');
+    if (el) el.textContent = savedName;
+  }
+  const av = document.getElementById('profileAvatar');
+  if (av) {
+    if (savedAvatar) {
+      av.style.display = '';
+      av.innerHTML = `<img src="${savedAvatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;">`;
+    } else if (savedName) {
+      av.style.display = 'none';
+    }
+  }
   try {
     const r = await fetch('/api/me', { cache: 'no-store' });
     if (!r.ok) return;
     const d = await r.json();
     if (d.enabled && d.user) {
+      localStorage.setItem('ce-user-name', d.user.name || '');
+      localStorage.setItem('ce-user-avatar', d.user.avatar || '');
       const el = document.getElementById('profileName');
       if (el) el.textContent = d.user.name;
-      const av = document.getElementById('profileAvatar');
       if (av) {
         if (d.user.avatar) {
           av.style.display = '';
@@ -460,7 +520,7 @@ function toggleProfileDropdown() {
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
     </svg>
-    Logout
+    ${I18N.t('logout')}
   </div>`;
 
   const dd = document.createElement('div');

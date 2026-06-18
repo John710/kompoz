@@ -21,7 +21,7 @@ const Sidebar = (() => {
       html += `<div class="file-group">
         <div class="file-group-label">
           <div class="fg-dot" style="background:${TYPE_COLOR[type]}"></div>
-          ${TYPE_LABEL[type]}
+          ${I18N.t("fileType_" + type)}
           <span class="count">${list.length}</span>
         </div>`;
       list.forEach(f => { html += _item(f); });

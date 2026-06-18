@@ -3,10 +3,10 @@ services:
     image: ghcr.io/John710/kompoz:latest
     container_name: kompoz
     restart: unless-stopped
-    networks:
-      - home-network
-    ports:
-      - "3210:3000"
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    network_mode: host
     volumes:
       # Direct-mode: the folder itself is a project.
       # Name in UI = basename of mount point (e.g. "docker" for /mnt/docker).
@@ -35,6 +35,12 @@ services:
       # Without "|" the name is taken from the basename of the mount point.
       - COMPOSE_MOUNTS=/mnt/docker,/mnt/server
       - TZ=UTC
+      - PORT=3710
+
+      # PostgreSQL connection string (required for DB auth and network map features).
+      # If not set, the app falls back to file-based auth and disables network persistence.
+      # Format: postgres://user:password@host:port/database
+      - DATABASE_URL=
 
       # Optional: enable login/password authentication.
       # If both are set, all pages and API endpoints require authentication.
@@ -46,8 +52,13 @@ services:
       # If not set, a random secret is generated on each container restart.
       # - AUTH_SECRET=your-generated-secret-here
 
+      # Security environment variables
+      - COOKIE_SECURE=
+      - FILE_EXT_WHITELIST=
+      - ALLOW_ALL_EXTENSIONS=
+
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/info"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3710/api/info"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -61,6 +72,3 @@ services:
         reservations:
           cpus: '0.25'
           memory: 64M
-
-networks:
-  home-network:

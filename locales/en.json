@@ -196,5 +196,12 @@
   "selectLinkType": "Select Link Type",
   "create": "Create",
   "cancel": "Cancel",
-  "editor": "Editor"
+  "editor": "Editor",
+  "fileNamePlaceholder": "file.yml",
+  "githubTooltip": "GitHub repository",
+  "logout": "Logout",
+  "newProjectNamePlaceholder": "my-project",
+  "noProjects": "No projects",
+  "passwordPlaceholder": "Enter password",
+  "resizeTooltip": "Resize panel"
 }

@@ -236,7 +236,7 @@ html,body { height:100%; background:var(--bg); color:var(--text); font-family:va
     <h3 data-i18n="newProjectTitle">Новый проект</h3>
     <div class="modal-field">
       <label data-i18n="projectNameLabel">Название (латиница, цифры, _ -)</label>
-      <input type="text" id="newProjectName" placeholder="my-project" onkeydown="if(event.key==='Enter')submitNewProject()">
+      <input type="text" id="newProjectName" data-i18n="newProjectNamePlaceholder" data-i18n-attr="placeholder" onkeydown="if(event.key==='Enter')submitNewProject()">
     </div>
     <div class="modal-actions">
       <button class="btn" onclick="closeModal()" data-i18n="cancel">Отмена</button>
@@ -272,7 +272,7 @@ function renderProjects() {
   const countEl = document.getElementById('projectCount');
 
   if (!projects.length) {
-    countEl.textContent = I18N.t('noProjects') || 'Нет проектов';
+    countEl.textContent = I18N.t('noProjects');
     grid.innerHTML = `
       <div class="empty-state" style="grid-column:1/-1">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">

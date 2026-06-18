@@ -196,5 +196,12 @@
   "selectLinkType": "Выберите тип связи",
   "create": "Создать",
   "cancel": "Отмена",
-  "editor": "Редактор"
+  "editor": "Редактор",
+  "fileNamePlaceholder": "файл.yml",
+  "githubTooltip": "Репозиторий на GitHub",
+  "logout": "Выйти",
+  "newProjectNamePlaceholder": "мой-проект",
+  "noProjects": "Нет проектов",
+  "passwordPlaceholder": "Введите пароль",
+  "resizeTooltip": "Изменить размер панели"
 }

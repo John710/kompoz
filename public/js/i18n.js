@@ -136,6 +136,7 @@ const I18N = (() => {
     }
     document.documentElement.lang = currentLang;
     _translateDOM();
+    document.body.style.visibility = "visible";
   }
 
   function t(key, placeholders = {}) {

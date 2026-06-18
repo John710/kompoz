@@ -5,7 +5,13 @@ const Toast = (() => {
     const icons = { success: '✓', error: '✕', info: 'ℹ' };
     const el = document.createElement('div');
     el.className = `toast ${type}`;
-    el.innerHTML = `<span>${icons[type] || '·'}</span><span>${msg}</span>`;
+    el.innerHTML = '';
+    const iconSpan = document.createElement('span');
+    iconSpan.textContent = icons[type] || '·';
+    const msgSpan = document.createElement('span');
+    msgSpan.textContent = msg;
+    el.appendChild(iconSpan);
+    el.appendChild(msgSpan);
     document.getElementById('toastContainer').appendChild(el);
     setTimeout(() => {
       el.classList.add('removing');

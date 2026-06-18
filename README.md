@@ -39,7 +39,10 @@ The app will be available at `http://localhost:3210`.
 | `TZ` | Container timezone | `Asia/Vladivostok` |
 | `AUTH_USER` | Login username (optional, enables auth) | `admin` |
 | `AUTH_PASS` | Login password (optional, enables auth) | `secret123` |
-| `AUTH_SECRET` | Secret key for signing cookies (optional) | `random-string` |
+| `AUTH_SECRET` | Secret key for signing cookies | `random-string` |
+| `COOKIE_SECURE` | Add `Secure` flag to auth cookie (set to `true` for HTTPS) | `true` |
+| `FILE_EXT_WHITELIST` | Custom regex for allowed file extensions | `\.(yml\|yaml\|env)$` |
+| `ALLOW_ALL_EXTENSIONS` | Bypass file extension whitelist | `true` |
 
 ### Mount Modes
 
@@ -53,7 +56,7 @@ The app will be available at `http://localhost:3210`.
 ```
 .
 ├── docker-compose.yml      # Docker Compose launch
-├── Dockerfile              # Node 20 Alpine
+├── Dockerfile              # Node 22 Alpine
 ├── package.json
 ├── public/
 │   ├── index.html          # Home (project list)
@@ -85,21 +88,26 @@ The app will be available at `http://localhost:3210`.
 
 ## Tech Stack
 
-- **Backend:** Node.js 20, Express
+- **Backend:** Node.js 22, Express 5
 - **Frontend:** Vanilla JS, CodeMirror 5, D3 (zoom/pan on the map)
 - **Linting:** dclint, yaml
 - **Deploy:** Docker Compose
+- **CI:** GitHub Actions (auto-release + Docker image)
 
 ---
 
 ## Security
 
-Set `AUTH_USER` and `AUTH_PASS` environment variables to enable login/password protection.
-If both are set, all pages and API endpoints require authentication.
-Leave them empty (default) to run without auth in a trusted network.
+- **Authentication:** set `AUTH_USER` and `AUTH_PASS` to enable login/password protection. All pages and API endpoints require authentication when both are set.
+- **Timing-safe comparison:** login and token verification use `crypto.timingSafeEqual` to prevent timing attacks.
+- **Rate limiting:** login endpoint is limited to 5 attempts per 15 minutes per IP.
+- **Path traversal protection:** `safeResolvePath` uses `fs.realpathSync` to block symlinks escaping the mount root.
+- **XSS mitigation:** frontend renders dynamic content with DOM APIs and HTML entity escaping instead of `innerHTML`.
+- **CSP-ready:** inline event handlers migrated to `addEventListener`.
+- **File extension whitelist:** configurable whitelist on file create/save operations.
 
 ---
 
 ## License
 
-MIT
+AGPL-3.0-or-later

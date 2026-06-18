@@ -4,6 +4,14 @@ const fs      = require('fs');
 const crypto  = require('crypto');
 const db      = require('./utils/db');
 const { getMountRoots, getAllProjects } = require('./utils/fs');
+
+function safeCompare(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const bufA = Buffer.from(a.padEnd(256, '\0'));
+  const bufB = Buffer.from(b.padEnd(256, '\0'));
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 const pkg = require('../package.json');
 
 const app  = express();
@@ -30,7 +38,14 @@ function verifyToken(token) {
     const payload = Buffer.from(token.slice(0, dot), 'base64url').toString('utf8');
     const sig = token.slice(dot + 1);
     const expected = crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest('base64url');
-    if (sig !== expected) return null;
+    try {
+      const sigBuf = Buffer.from(sig, 'base64url');
+      const expBuf = Buffer.from(expected, 'base64url');
+      if (sigBuf.length !== expBuf.length) return null;
+      if (!crypto.timingSafeEqual(sigBuf, expBuf)) return null;
+    } catch {
+      return null;
+    }
     const colon = payload.indexOf(':');
     if (colon === -1) return null;
     const username = payload.slice(0, colon);
@@ -45,9 +60,25 @@ function parseCookies(req) {
   const cookies = {};
   raw.split(';').forEach(c => {
     const [k, ...v] = c.trim().split('=');
-    if (k) cookies[k] = decodeURIComponent(v.join('='));
+    if (k) {
+      let value = '';
+      try { value = decodeURIComponent(v.join('=')); } catch { value = v.join('='); }
+      cookies[k] = value;
+    }
   });
   return cookies;
+}
+
+// Rate limiter for login
+const loginAttempts = new Map();
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const attempts = loginAttempts.get(ip) || [];
+  const recent = attempts.filter(t => now - t < 15 * 60 * 1000);
+  if (recent.length >= 5) return false;
+  recent.push(now);
+  loginAttempts.set(ip, recent);
+  return true;
 }
 
 async function isAuthEnabled() {
@@ -164,6 +195,10 @@ app.post('/api/login', async (req, res) => {
     const enabled = await isAuthEnabled();
     if (!enabled) return res.json({ ok: true, enabled: false });
 
+    if (!checkRateLimit(req.ip)) {
+      return res.status(429).json({ error: 'Too many attempts', errorKey: 'tooManyAttempts' });
+    }
+
     const { username, password } = req.body || {};
 
     if (process.env.DATABASE_URL) {
@@ -178,15 +213,17 @@ app.post('/api/login', async (req, res) => {
       const expiresAt = new Date(Date.now() + TOKEN_TTL_MS);
       await db.query('INSERT INTO sessions (user_id, token, expires_at) VALUES ($1, $2, $3)', [rows[0].id, token, expiresAt]);
 
-      res.setHeader('Set-Cookie', COOKIE_NAME + '=' + token + '; HttpOnly; Path=/; Max-Age=' + (TOKEN_TTL_MS / 1000) + '; SameSite=Strict');
+      const secure = (req.secure || process.env.COOKIE_SECURE === 'true') ? '; Secure' : '';
+      res.setHeader('Set-Cookie', COOKIE_NAME + '=' + token + '; HttpOnly; Path=/; SameSite=Strict' + secure + '; Max-Age=' + (TOKEN_TTL_MS / 1000));
       res.json({ ok: true });
     } else {
-      if (username !== AUTH_USER || password !== AUTH_PASS) {
+      if (!safeCompare(username, AUTH_USER) || !safeCompare(password, AUTH_PASS)) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
       const expiry = Date.now() + TOKEN_TTL_MS;
       const token = signToken(username, expiry);
-      res.setHeader('Set-Cookie', COOKIE_NAME + '=' + token + '; HttpOnly; Path=/; Max-Age=' + (TOKEN_TTL_MS / 1000) + '; SameSite=Strict');
+      const secure = (req.secure || process.env.COOKIE_SECURE === 'true') ? '; Secure' : '';
+      res.setHeader('Set-Cookie', COOKIE_NAME + '=' + token + '; HttpOnly; Path=/; SameSite=Strict' + secure + '; Max-Age=' + (TOKEN_TTL_MS / 1000));
       res.json({ ok: true });
     }
   } catch (err) {
@@ -288,7 +325,7 @@ app.post('/api/verify-password', async (req, res) => {
       if (!valid) return res.status(401).json({ error: 'Invalid password', errorKey: 'invalidPassword' });
     } else {
       if (!AUTH_ENABLED) return res.json({ ok: true });
-      if (password !== AUTH_PASS) {
+      if (!safeCompare(password, AUTH_PASS)) {
         return res.status(401).json({ error: 'Invalid password', errorKey: 'invalidPassword' });
       }
     }
@@ -330,3 +367,8 @@ if (require.main === module) {
 }
 
 module.exports = app;
+module.exports.safeCompare = safeCompare;
+module.exports.parseCookies = parseCookies;
+module.exports.verifyToken = verifyToken;
+module.exports.signToken = signToken;
+module.exports.checkRateLimit = checkRateLimit;

@@ -1,8 +1,8 @@
 // themes.js — light/dark theme switcher
 
 const Themes = (() => {
+  const STORAGE_KEY = 'ce-theme';
   const DEFAULT_THEME = 'dark';
-  let currentTheme = DEFAULT_THEME;
 
   const themes = {
     dark: {
@@ -47,6 +47,8 @@ const Themes = (() => {
     }
   };
 
+  let currentTheme = localStorage.getItem(STORAGE_KEY) || DEFAULT_THEME;
+
   function _updateIcons() {
     const darkIcon = document.querySelector('.theme-icon-dark');
     const lightIcon = document.querySelector('.theme-icon-light');
@@ -54,27 +56,15 @@ const Themes = (() => {
     if (lightIcon) lightIcon.style.display = currentTheme === 'dark' ? 'none' : '';
   }
 
-  function _applyTheme(themeName) {
+  function apply(themeName) {
     const t = themes[themeName];
     if (!t) return;
     currentTheme = themeName;
+    localStorage.setItem(STORAGE_KEY, themeName);
     const root = document.documentElement;
     Object.entries(t).forEach(([k, v]) => root.style.setProperty(k, v));
     root.setAttribute('data-theme', themeName);
     _updateIcons();
-  }
-
-  async function apply(themeName) {
-    _applyTheme(themeName);
-    try {
-      await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ settings: { theme: themeName } })
-      });
-    } catch (e) {
-      console.error('Failed to save theme to server:', e);
-    }
   }
 
   function toggle() {
@@ -83,17 +73,8 @@ const Themes = (() => {
 
   function get() { return currentTheme; }
 
-  async function init() {
-    try {
-      const res = await fetch('/api/settings');
-      const data = await res.json();
-      if (data.settings && data.settings.theme) {
-        currentTheme = data.settings.theme;
-      }
-    } catch (e) {
-      console.error('Failed to load theme from server:', e);
-    }
-    _applyTheme(currentTheme);
+  function init() {
+    apply(currentTheme);
   }
 
   return { init, apply, toggle, get };

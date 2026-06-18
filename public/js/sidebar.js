@@ -37,18 +37,24 @@ const Sidebar = (() => {
     updateActive();
   }
 
+  function _escHtml(s) {
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    return s.replace(/[&<>"']/g, c => map[c]);
+  }
+
   function _item(f) {
     const tab = State.openTabs.find(t => t.path === f.path);
     const isActive   = State.activeTab === f.path;
     const isModified = tab && tab.modified;
-    const ep = _esc(f.path);
+    const ep = _escHtml(_esc(f.path));
+    const en = _escHtml(_esc(f.name));
     return `<div class="file-item ${isActive?'active':''} ${isModified?'modified':''}"
-      onclick="App.openFile('${ep}','${_esc(f.name)}','${f.type}')" data-path="${f.path}">
+      onclick="App.openFile('${ep}','${en}','${f.type}')" data-path="${_escHtml(f.path)}">
       <div class="file-tag" style="background:${TYPE_COLOR[f.type]||'var(--text3)'}"></div>
-      <div class="file-name">${f.name}</div>
+      <div class="file-name">${_escHtml(f.name)}</div>
       <div class="file-actions">
         <button class="file-action-btn danger"
-          onclick="event.stopPropagation();App.confirmDeleteFile('${ep}')" title="${I18N.t('deleteFileTitle')}">
+          onclick="event.stopPropagation();App.confirmDeleteFile('${ep}')" title="${_escHtml(I18N.t('deleteFileTitle'))}">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="3 6 5 6 21 6"/>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>

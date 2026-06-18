@@ -12,7 +12,8 @@ router.get('/', (req, res) => {
     const { can }  = canCreateProjects();
     res.json({ projects, canCreate: can });
   } catch (err) {
-    res.status(500).json({ error: err.message, errorKey: 'errorLoadProjects' });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error', errorKey: 'errorLoadProjects' });
   }
 });
 
@@ -32,7 +33,8 @@ router.post('/', (req, res) => {
     fs.mkdirSync(path.join(projectDir, 'compose'), { recursive: true });
     res.json({ ok: true, name });
   } catch (err) {
-    res.status(500).json({ error: err.message, errorKey: 'errorDelete' });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error', errorKey: 'errorCreateProject' });
   }
 });
 
@@ -50,7 +52,8 @@ router.delete('/:name', (req, res) => {
     fs.rmSync(dir, { recursive: true, force: true });
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message, errorKey: 'errorDelete' });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error', errorKey: 'errorDeleteProject' });
   }
 });
 

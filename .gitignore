@@ -18,6 +18,21 @@ yarn-error.log*
 # Backups
 *.bak
 
+# Test coverage
+.nyc_output/
+coverage/
+
+# Temp
+tmp/
+temp/
+
+# Cache
+.eslintcache
+.npm/
+
+# Pack
+*.tgz
+
 # IDE
 .vscode/
 .idea/
@@ -34,3 +49,6 @@ Thumbs.db
 dist/
 build/
 scripts/
+
+# Workspace artifacts
+.kimchi/

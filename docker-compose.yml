@@ -52,6 +52,11 @@ services:
       # If not set, a random secret is generated on each container restart.
       # - AUTH_SECRET=your-generated-secret-here
 
+      # Security environment variables
+      - COOKIE_SECURE=
+      - FILE_EXT_WHITELIST=
+      - ALLOW_ALL_EXTENSIONS=
+
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3710/api/info"]
       interval: 30s

@@ -1,126 +1,40 @@
-/* Unified header styles across all pages */
-.header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 20px;
-  height: 52px;
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.header-logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--text);
-  white-space: nowrap;
-}
-
-.header-logo svg {
-  color: var(--accent);
-  flex-shrink: 0;
-}
-
+/* Unified header actions across all pages */
 .header-actions {
-  margin-left: auto;
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
 }
 
-.header-icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text2);
-  cursor: pointer;
-  transition: all .15s;
-  text-decoration: none;
-}
-
-.header-icon-btn:hover {
-  background: var(--bg3);
-  color: var(--text);
-}
-
-.btn {
+.header-actions .btn,
+.header-actions .header-icon-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 0 10px;
+  justify-content: center;
   height: 34px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text2);
+  cursor: pointer;
+  transition: all .15s;
   font-family: var(--display);
   font-size: 12px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all .15s;
+  padding: 0 10px;
+  gap: 5px;
   text-decoration: none;
 }
 
-.btn:hover {
+.header-actions .header-icon-btn {
+  width: 34px;
+  padding: 0;
+}
+
+.header-actions .btn:hover,
+.header-actions .header-icon-btn:hover {
   background: var(--bg3);
   color: var(--text);
-}
-
-.btn.active {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-}
-
-.hcenter {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Project selector (for editor page) */
-.project-selector {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 10px;
-  height: 34px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text2);
-  cursor: pointer;
-  transition: all .15s;
-  font-family: var(--display);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.project-selector:hover {
-  background: var(--bg3);
-  color: var(--text);
-}
-
-.project-selector .proj-name {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--text);
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  border-color: var(--border);
 }
 
 /* Profile block */
@@ -175,39 +89,11 @@
   transform: rotate(180deg);
 }
 
-/* Update dot (for GitHub button) */
-.update-dot {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 8px;
-  height: 8px;
-  background: #ff5b5b;
-  border-radius: 50%;
-  animation: pulse 1.5s infinite;
-  box-shadow: 0 0 0 0 rgba(255,91,91,.7);
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(.95);
-    box-shadow: 0 0 0 0 rgba(255,91,91,.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 6px rgba(255,91,91,0);
-  }
-  100% {
-    transform: scale(.95);
-    box-shadow: 0 0 0 0 rgba(255,91,91,0);
-  }
-}
+.update-dot { position:absolute; top:-2px; right:-2px; width:8px; height:8px; background:#ff5b5b; border-radius:50%; animation:pulse 1.5s infinite; box-shadow:0 0 0 0 rgba(255,91,91,.7); }
+@keyframes pulse { 0%{transform:scale(.95);box-shadow:0 0 0 0 rgba(255,91,91,.7)} 70%{transform:scale(1);box-shadow:0 0 0 6px rgba(255,91,91,0)} 100%{transform:scale(.95);box-shadow:0 0 0 0 rgba(255,91,91,0)} }
 
 /* Tooltip styles */
-[data-tooltip] {
-  position: relative;
-}
-
+[data-tooltip] { position: relative; }
 [data-tooltip]::before,
 [data-tooltip]::after {
   position: absolute;
@@ -217,7 +103,6 @@
   pointer-events: none;
   transition: opacity .1s;
 }
-
 [data-tooltip]::after {
   content: attr(data-tooltip);
   top: calc(100% + 6px);
@@ -232,7 +117,6 @@
   box-shadow: 0 4px 12px rgba(0,0,0,.3);
   z-index: 1000;
 }
-
 [data-tooltip]::before {
   content: '';
   top: calc(100% + 1px);
@@ -240,72 +124,7 @@
   border-style: solid;
   border-color: transparent transparent var(--border) transparent;
 }
-
 [data-tooltip]:hover::before,
 [data-tooltip]:hover::after {
   opacity: 1;
-}
-
-/* Shimmer effect for loading states */
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-.skeleton-text {
-  display: inline-block;
-  width: 60px;
-  height: 14px;
-  background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 4px;
-}
-
-/* Project dropdown */
-.proj-dropdown {
-  position: fixed;
-  z-index: 200;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.4);
-  overflow: hidden;
-  animation: fadeDown .15s ease;
-}
-
-.proj-dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 12px;
-  cursor: pointer;
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--text2);
-  transition: background .1s;
-}
-
-.proj-dropdown-item:hover {
-  background: var(--bg4);
-  color: var(--text);
-}
-
-.proj-dropdown-item.active {
-  color: var(--accent);
-}
-
-@keyframes fadeDown {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }

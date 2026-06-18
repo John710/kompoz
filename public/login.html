@@ -1,38 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<script>(function(){var t=localStorage.getItem('ce-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
-<script>
-  // Initialize i18n immediately to prevent flash of English text
-  (function() {
-    const savedLang = localStorage.getItem('ce-lang') || 'en';
-    document.documentElement.lang = savedLang;
-  })();
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="loginTitle"></title>
+<title>Kompoz — Login</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght400;500;600&family=Inter:wght400;500;600;700&display=swap" rel="stylesheet">
-<script src="js/i18n.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root[data-theme="dark"] {
+:root {
   --bg:#0d1117; --bg2:#161b22; --bg3:#21262d; --bg4:#222736;
   --text:#c9d1d9; --text2:#8b949e; --text3:#6e7681;
   --border:#30363d; --accent:#58a6ff; --accent2:#1f6feb;
   --green:#3fb950; --red:#f85149;
-  --mono:'JetBrains Mono',monospace; --display:'Inter',sans-serif;;
-  --panel:#1a1e2a;}
-:root[data-theme="light"] {
-  --bg:#ffffff; --bg2:#f6f8fa; --bg3:#eaeef2; --bg4:#e1e4e8;
-  --text:#24292f; --text2:#57606a; --text3:#8c959f;
-  --border:#d0d7de; --accent:#0969da; --accent2:#0550ae;
-  --green:#1a7f37; --red:#cf222e;
-  --mono:'JetBrains Mono',monospace; --display:'Inter',sans-serif;;
-  --panel:#ffffff;}
-
-body { visibility: hidden; }
+  --mono:'JetBrains Mono',monospace; --display:'Inter',sans-serif;
+}
 html,body { height:100%; background:var(--bg); color:var(--text); font-family:var(--display); display:flex; align-items:center; justify-content:center; }
 .login-card {
   background:var(--bg2); border:1px solid var(--border); border-radius:12px;
@@ -56,10 +38,6 @@ html,body { height:100%; background:var(--bg); color:var(--text); font-family:va
 .login-btn:hover { background:var(--accent2); }
 .login-error { margin-top:12px; font-family:var(--mono); font-size:12px; color:var(--red); text-align:center; display:none; }
 .login-error.vis { display:block; }
-::-webkit-scrollbar{width:6px;height:6px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:var(--text3)}
 </style>
 </head>
 <body>
@@ -70,23 +48,21 @@ html,body { height:100%; background:var(--bg); color:var(--text); font-family:va
       <path d="m8 21 8 0M12 17v4"/>
       <path d="m7 8 2 2-2 2M11 12h4"/>
     </svg>
-
+    Kompoz
   </div>
   <div class="login-field">
-    <label data-i18n="usernameLabel"></label>
-    <input type="text" id="username" data-i18n="userPlaceholder" data-i18n-attr="placeholder" autocomplete="username" onkeydown="if(event.key==='Enter')submitLogin()">
+    <label>Username</label>
+    <input type="text" id="username" placeholder="user" autocomplete="username" onkeydown="if(event.key==='Enter')submitLogin()">
   </div>
   <div class="login-field">
-    <label data-i18n="passwordLabel"></label>
-    <input type="password" id="password" data-i18n="passwordPlaceholder" data-i18n-attr="placeholder" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitLogin()">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitLogin()">
   </div>
-  <button class="login-btn" onclick="submitLogin()" data-i18n="signIn"></button>
-  <div class="login-error" id="loginError" data-i18n="invalidCredentials"></div>
+  <button class="login-btn" onclick="submitLogin()">Sign in</button>
+  <div class="login-error" id="loginError">Invalid credentials</div>
 </div>
 
 <script>
-(async function(){ await I18N.init(); I18N.refresh(); })();
-
 async function submitLogin() {
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
@@ -106,7 +82,7 @@ async function submitLogin() {
       errEl.classList.add('vis');
     }
   } catch(e) {
-    errEl.textContent = I18N.t('networkError');
+    errEl.textContent = 'Network error';
     errEl.classList.add('vis');
   }
 }

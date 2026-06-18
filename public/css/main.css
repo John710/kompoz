@@ -1,11 +1,6 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* Prevent flicker while translations load */
-body {
-  visibility: hidden;
-}
-
-:root[data-theme="dark"] {
+:root {
   --bg:      #0d0f14; --bg2: #13161e; --bg3: #1a1e2a; --bg4: #222736;
   --border:  #2a3045;
   --accent:  #5b8cff; --accent2: #3d6aff;
@@ -14,20 +9,8 @@ body {
   --text:    #e2e8f8; --text2: #8892aa; --text3: #4a5468;
   --mono:    'JetBrains Mono', monospace;
   --display: 'Syne', sans-serif;
-  --radius:  8px;;
-  --panel:#1a1e2a;}
-:root[data-theme="light"] {
-  --bg:      #ffffff; --bg2: #f6f8fa; --bg3: #eaeef2; --bg4: #e1e4e8;
-  --border:  #d0d7de;
-  --accent:  #0969da; --accent2: #0550ae;
-  --green:   #1a7f37; --red: #cf222e; --yellow: #9a6700; --purple: #8250df;
-  --root-tag: #bf8700; --comp-tag: #0969da;
-  --text:    #24292f; --text2: #57606a; --text3: #8c959f;
-  --mono:    'JetBrains Mono', monospace;
-  --display: 'Syne', sans-serif;
-  --radius:  8px;;
-  --panel:#ffffff;}
-
+  --radius:  8px;
+}
 
 html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--display); }
 
@@ -36,8 +19,8 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 
 /* ── Header ── */
 .header {
-  grid-column: 1/-1; display: flex; align-items: center; gap: 12px;
-  padding: 0 20px; height: 52px; background: var(--bg2); border-bottom: 1px solid var(--border); z-index: 10;
+  grid-column: 1/-1; display: flex; align-items: center; gap: 10px;
+  padding: 0 14px; background: var(--bg2); border-bottom: 1px solid var(--border); z-index: 10;
 }
 .header-logo { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; color: var(--text); white-space: nowrap; }
 .header-logo svg { color: var(--accent); flex-shrink: 0; }
@@ -51,7 +34,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .project-selector:hover { border-color: var(--accent); color: var(--text); }
 .project-selector .proj-name { flex: 1; }
 
-.header-actions { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.header-actions { margin-left: auto; display: flex; gap: 5px; align-items: center; }
 .header-actions .btn { height: 34px; }
 
 /* ── Buttons ── */
@@ -563,19 +546,19 @@ html[data-theme="light"] .CodeMirror-lint-mark-warning {
 /* ── Profile ── */
 .header-profile {
   display: flex; align-items: center; gap: 8px;
-  padding: 4px 10px;
-  border-radius: 8px;
+  padding: 0 10px; height: 34px;
+  border-radius: var(--radius); border: 1px solid var(--border);
   background: transparent; color: var(--text2);
   cursor: pointer; transition: all .15s;
   font-family: var(--display); font-size: 12px; font-weight: 600;
 }
 .header-profile:hover { background: var(--bg3); color: var(--text); }
 .profile-avatar {
-  width: 26px; height: 26px; border-radius: 50%;
+  width: 22px; height: 22px; border-radius: 50%;
   background: var(--accent);
   display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 11px; font-weight: 700;
+  color: #fff; font-size: 10px; font-weight: 700;
 }
-.profile-name { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.profile-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .profile-chevron { color: var(--text3); transition: transform .15s; }
 .header-profile:hover .profile-chevron { transform: rotate(180deg); }

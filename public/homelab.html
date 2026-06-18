@@ -162,7 +162,7 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
       </a>
       <div class="header-profile" id="profileBlock" onclick="toggleProfileDropdown()">
         <div class="profile-avatar" id="profileAvatar">U</div>
-        <span class="profile-name" id="profileName">User</span>
+        <span class="profile-name" id="profileName"><span class="skeleton-text" style="display:inline-block;width:60px;height:14px;background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px;">&nbsp;</span></span>
         <svg class="profile-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
     </div>
@@ -351,6 +351,10 @@ async function loadUser() {
           av.style.display = 'none';
         }
       }
+    } else {
+      // Auth disabled or no user data — hide skeleton
+      const el = document.getElementById('profileName');
+      if (el) el.textContent = 'User';
     }
   } catch {}
 }

@@ -444,30 +444,108 @@ function resolveEnv(str) {
 // Tooltip
 function showTip(event, d) {
   const tt = document.getElementById('tooltip');
-  let html = `<div class="tt-title">${d.name}</div>`;
+  tt.innerHTML = '';
+  const title = document.createElement('div');
+  title.className = 'tt-title';
+  title.textContent = d.name;
+  tt.appendChild(title);
   if (d._type === 'svc') {
-    if (d.image)         html += `<div class="tt-row">${I18N.t('imageLabel')} <b>${d.image}</b></div>`;
-    if (d.ports?.length) html += `<div class="tt-row">${I18N.t('portsLabel')} <b>${d.ports.slice(0,3).map(resolveEnv).join(', ')}${d.ports.length>3?'…':''}</b></div>`;
-    if (d.networks?.length) html += `<div class="tt-row">${I18N.t('networksLabel')} <b>${d.networks.join(', ')}</b></div>`;
-    html += `<div class="tt-row">${I18N.t('fileLabel')} <b>${d.sourceFile}</b></div>`;
+    if (d.image) {
+      const row = document.createElement('div');
+      row.className = 'tt-row';
+      row.textContent = I18N.t('imageLabel') + ' ';
+      const b = document.createElement('b');
+      b.textContent = d.image;
+      row.appendChild(b);
+      tt.appendChild(row);
+    }
+    if (d.ports?.length) {
+      const row = document.createElement('div');
+      row.className = 'tt-row';
+      row.textContent = I18N.t('portsLabel') + ' ';
+      const b = document.createElement('b');
+      b.textContent = d.ports.slice(0,3).map(resolveEnv).join(', ') + (d.ports.length>3?'…':'');
+      row.appendChild(b);
+      tt.appendChild(row);
+    }
+    if (d.networks?.length) {
+      const row = document.createElement('div');
+      row.className = 'tt-row';
+      row.textContent = I18N.t('networksLabel') + ' ';
+      const b = document.createElement('b');
+      b.textContent = d.networks.join(', ');
+      row.appendChild(b);
+      tt.appendChild(row);
+    }
+    const row = document.createElement('div');
+    row.className = 'tt-row';
+    row.textContent = I18N.t('fileLabel') + ' ';
+    const b = document.createElement('b');
+    b.textContent = d.sourceFile;
+    row.appendChild(b);
+    tt.appendChild(row);
   } else if (d._type === 'net') {
-    html += `<div class="tt-row">${I18N.t('driverLabel')} <b>${d.driver}</b></div>`;
-    if (d.subnet)   html += `<div class="tt-row">${I18N.t('subnetLabel')} <b>${d.subnet}</b></div>`;
-    if (d.internal) html += `<div class="tt-row"><b>${I18N.t('internalLabel')}</b></div>`;
-    if (d.external) html += `<div class="tt-row"><b>${I18N.t('externalLabel')}</b></div>`;
+    const row = document.createElement('div');
+    row.className = 'tt-row';
+    row.textContent = I18N.t('driverLabel') + ' ';
+    const b = document.createElement('b');
+    b.textContent = d.driver;
+    row.appendChild(b);
+    tt.appendChild(row);
+    if (d.subnet) {
+      const row2 = document.createElement('div');
+      row2.className = 'tt-row';
+      row2.textContent = I18N.t('subnetLabel') + ' ';
+      const b2 = document.createElement('b');
+      b2.textContent = d.subnet;
+      row2.appendChild(b2);
+      tt.appendChild(row2);
+    }
+    if (d.internal) {
+      const row3 = document.createElement('div');
+      row3.className = 'tt-row';
+      const b3 = document.createElement('b');
+      b3.textContent = I18N.t('internalLabel');
+      row3.appendChild(b3);
+      tt.appendChild(row3);
+    }
+    if (d.external) {
+      const row4 = document.createElement('div');
+      row4.className = 'tt-row';
+      const b4 = document.createElement('b');
+      b4.textContent = I18N.t('externalLabel');
+      row4.appendChild(b4);
+      tt.appendChild(row4);
+    }
   } else {
-    html += `<div class="tt-row">${I18N.t('namedVolume')}</div>`;
-    html += `<div class="tt-row">${I18N.t('fileLabel')} <b>${d.sourceFile}</b></div>`;
+    const row = document.createElement('div');
+    row.className = 'tt-row';
+    row.textContent = I18N.t('namedVolume');
+    tt.appendChild(row);
+    const row2 = document.createElement('div');
+    row2.className = 'tt-row';
+    row2.textContent = I18N.t('fileLabel') + ' ';
+    const b2 = document.createElement('b');
+    b2.textContent = d.sourceFile;
+    row2.appendChild(b2);
+    tt.appendChild(row2);
   }
-  tt.innerHTML = html;
   tt.classList.add('vis');
   moveTip(event);
 }
 function showPortTip(event, ports) {
   const tt = document.getElementById('tooltip');
-  const html = `<div class="tt-title">${I18N.t('portsLabel')}</div>` +
-    ports.map(p => `<div class="tt-row">${resolveEnv(p)}</div>`).join('');
-  tt.innerHTML = html;
+  tt.innerHTML = '';
+  const title = document.createElement('div');
+  title.className = 'tt-title';
+  title.textContent = I18N.t('portsLabel');
+  tt.appendChild(title);
+  ports.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'tt-row';
+    row.textContent = resolveEnv(p);
+    tt.appendChild(row);
+  });
   tt.classList.add('vis');
   moveTip(event);
 }

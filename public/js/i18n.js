@@ -66,7 +66,29 @@ const I18N = (() => {
     invalidPassword: 'Invalid password',
     deleteProjectMenu: 'Delete project',
     allFilesWillBeDeleted: 'All project files will be permanently deleted.',
-    dclintDescriptions: {}, dclintMessages: {}
+    dclintDescriptions: {}, dclintMessages: {},
+    logout: 'Logout',
+    scan: 'Scan',
+    scanNetwork: 'Scan Network',
+    checkStatus: 'Check Status',
+    clearPending: 'Clear Pending',
+    filters: 'Filters',
+    actions: 'Actions',
+    export: 'Export',
+    import: 'Import',
+    scanHistory: 'Scan History',
+    devices: 'Devices',
+    pending: 'Pending',
+    device: 'Device',
+    link: 'Link',
+    createLink: 'Create Link',
+    editLink: 'Edit Link',
+    newProjectNamePlaceholder: 'my-project',
+    fileNamePlaceholder: 'file.yml',
+    githubTooltip: 'GitHub repository',
+    resizeTooltip: 'Resize panel',
+    passwordPlaceholder: 'Enter password',
+    noProjects: 'No projects'
   };
 
   let dict = { [DEFAULT_LANG]: { ...fallback } };

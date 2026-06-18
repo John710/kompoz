@@ -10,14 +10,14 @@ services:
       TZ: ${TZ:-UTC}
     volumes:
       - db_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kompoz} -d ${POSTGRES_DB:-kompoz}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
-    networks:
-      - kompoz
 
   kompoz:
     image: ghcr.io/John710/kompoz:latest
@@ -26,11 +26,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    network_mode: host
     cap_add:
       - NET_RAW
       - NET_ADMIN
-    ports:
-      - "${PORT:-3710}:${PORT:-3710}"
     volumes:
       - /path/to/your/docker:/mnt/docker
       - /path/to/your/server:/mnt/server
@@ -38,7 +37,7 @@ services:
       - COMPOSE_MOUNTS=${COMPOSE_MOUNTS:-/mnt/docker,/mnt/server}
       - TZ=${TZ:-UTC}
       - PORT=${PORT:-3710}
-      - DATABASE_URL=${DATABASE_URL:-}
+      - DATABASE_URL=postgres://${POSTGRES_USER:-kompoz}:${POSTGRES_PASSWORD:-kompoz}@127.0.0.1:5432/${POSTGRES_DB:-kompoz}
       - AUTH_USER=${AUTH_USER:-}
       - AUTH_PASS=${AUTH_PASS:-}
       - AUTH_SECRET=${AUTH_SECRET:-}
@@ -51,12 +50,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-    networks:
-      - kompoz
-
-volumes:
-  db_data:
-
-networks:
-  kompoz:
-    driver: bridge

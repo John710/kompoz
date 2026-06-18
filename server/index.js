@@ -129,8 +129,16 @@ async function requireAuth(req, res, next) {
 
 app.use(requireAuth);
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, '../public')));
-app.use('/locales', express.static(path.join(__dirname, '../locales')));
+app.use(express.static(path.join(__dirname, '../public'), { setHeaders: (res, path) => {
+  if (path.endsWith('.html')) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+}}));
+app.use('/locales', express.static(path.join(__dirname, '../locales'), { setHeaders: (res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+}}));
 
 app.use('/api/projects', require('./routes/projects'));
 app.use('/api/files',    require('./routes/files'));

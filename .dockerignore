@@ -11,3 +11,22 @@ LICENSE
 *.bak
 .vscode
 .idea
+
+# Tests and CI
+test/
+.github/
+
+# Workspace artifacts
+.kimchi/
+
+# Docker / Compose
+.dockerignore
+docker-compose.yml
+
+# Coverage
+.nyc_output/
+coverage/
+
+# Temp
+tmp/
+temp/

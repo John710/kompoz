@@ -39,7 +39,10 @@ docker compose up -d
 | `TZ` | Часовой пояс контейнера | `Asia/Vladivostok` |
 | `AUTH_USER` | Логин (опционально, включает авторизацию) | `admin` |
 | `AUTH_PASS` | Пароль (опционально, включает авторизацию) | `secret123` |
-| `AUTH_SECRET` | Секретный ключ для подписи cookie (опционально) | `random-string` |
+| `AUTH_SECRET` | Секретный ключ для подписи cookie | `random-string` |
+| `COOKIE_SECURE` | Добавить флаг `Secure` в cookie (для HTTPS) | `true` |
+| `FILE_EXT_WHITELIST` | Пользовательское регулярное выражение для разрешённых расширений | `\.(yml\|yaml\|env)$` |
+| `ALLOW_ALL_EXTENSIONS` | Отключить проверку расширений файлов | `true` |
 
 ### Режимы монтирования
 
@@ -53,7 +56,7 @@ docker compose up -d
 ```
 .
 ├── docker-compose.yml      # Запуск через Docker
-├── Dockerfile              # Node 20 Alpine
+├── Dockerfile              # Node 22 Alpine
 ├── package.json
 ├── public/
 │   ├── index.html          # Главная (список проектов)
@@ -85,21 +88,26 @@ docker compose up -d
 
 ## Технологии
 
-- **Backend:** Node.js 20, Express
+- **Backend:** Node.js 22, Express 5
 - **Frontend:** Vanilla JS, CodeMirror 5, D3 (zoom/pan на карте)
 - **Linting:** dclint, yaml
 - **Deploy:** Docker Compose
+- **CI:** GitHub Actions (авто-релиз + Docker-образ)
 
 ---
 
 ## Безопасность
 
-Установите переменные окружения `AUTH_USER` и `AUTH_PASS`, чтобы включить авторизацию по логину и паролю.
-Если обе переменные заданы, все страницы и API требуют аутентификации.
-Оставьте пустыми (по умолчанию), чтобы запускать без авторизации в доверенной сети.
+- **Авторизация:** установите `AUTH_USER` и `AUTH_PASS`, чтобы включить защиту по логину и паролю. Все страницы и API требуют аутентификации, если обе переменные заданы.
+- **Защита от timing-атак:** логин и проверка токенов используют `crypto.timingSafeEqual`.
+- **Rate limiting:** на логин действует ограничение — 5 попыток на 15 минут с одного IP.
+- **Защита от path traversal:** `safeResolvePath` использует `fs.realpathSync` для блокировки symlink за пределами корня монтирования.
+- **XSS:** фронтенд рендерит динамический контент через DOM API и экранирование HTML-entities вместо `innerHTML`.
+- **CSP-ready:** inline обработчики событий мигрированы на `addEventListener`.
+- **Whitelist расширений:** при создании и сохранении файлов проверяется расширение по настраиваемому списку.
 
 ---
 
 ## Лицензия
 
-MIT
+AGPL-3.0-or-later

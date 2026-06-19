@@ -31,7 +31,7 @@ const Header = (function () {
     </button>`;
   }
 
-  function render({ center = '', extraActions = '', showProfile = true }) {
+  function render({ center = '', extraActions = '', showProfile = true, container = null } = {}) {
     const header = document.createElement('header');
     header.className = 'header';
     header.innerHTML = `
@@ -43,7 +43,8 @@ const Header = (function () {
         ${showProfile ? _makeProfile() : ''}
       </div>
     `;
-    document.body.prepend(header);
+    const target = container || document.body;
+    target.prepend(header);
   }
 
   async function loadUser() {
@@ -93,8 +94,8 @@ const Header = (function () {
     if (btn) btn.setAttribute('aria-expanded', 'false');
   }
 
-  function init({ center = '', extraActions = '', showProfile = true } = {}) {
-    render({ center, extraActions, showProfile });
+  function init({ center = '', extraActions = '', showProfile = true, container = null } = {}) {
+    render({ center, extraActions, showProfile, container });
     document.addEventListener('click', hideProfileDropdownOnClickOutside);
     loadUser();
   }

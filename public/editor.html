@@ -266,7 +266,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
   await I18N.init();
-  Header.render();
+  Header.render({ container: document.querySelector('.app') });
   I18N.refresh();
   loadUser();
   Themes.init();

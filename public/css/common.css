@@ -1,3 +1,5 @@
+*, *::before, *::after { box-sizing: border-box; }
+
 :root {
   --bg: #0d0f14;
   --bg2: #13161e;
@@ -85,6 +87,7 @@ body { visibility: hidden; }
   align-items: center;
   justify-content: center;
   width: 34px;
+  min-width: 34px;
   height: 34px;
   border-radius: 8px;
   border: 1px solid var(--border);
@@ -93,6 +96,7 @@ body { visibility: hidden; }
   cursor: pointer;
   transition: all .15s;
   text-decoration: none;
+  flex-shrink: 0;
 }
 
 .header-icon-btn:hover {

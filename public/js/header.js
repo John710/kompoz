@@ -34,16 +34,10 @@ const Header = (function () {
   }
 
   function _makeProfile() {
-    return `<button class="header-profile" id="headerProfile" onclick="Header.toggleProfileDropdown()" aria-haspopup="true" aria-expanded="false">
+    return `<button class="header-profile" id="profileBlock" onclick="toggleProfileDropdown()" aria-haspopup="true" aria-expanded="false">
       <span class="profile-avatar" id="profileAvatar">U</span>
       <span class="profile-name" id="profileName"><span class="skeleton-text">&nbsp;</span></span>
       <svg class="profile-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-      <div class="profile-dropdown" id="profileDropdown" style="position:absolute;top:100%;right:0;margin-top:6px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:100;display:none;">
-        <button class="profile-dropdown-item" id="headerLangBtn" style="width:100%;text-align:left;padding:8px 12px;border-radius:6px;border:none;background:transparent;color:var(--text);font-family:var(--display);font-size:13px;cursor:pointer;transition:background .15s;">
-          <span data-i18n="languageLabel">Language</span>: <strong id="headerLangVal"></strong>
-        </button>
-        <button class="profile-dropdown-item" id="headerLogoutBtn" onclick="Header.logout()" style="width:100%;text-align:left;padding:8px 12px;border-radius:6px;border:none;background:transparent;color:var(--text);font-family:var(--display);font-size:13px;cursor:pointer;transition:background .15s;" data-i18n="logout">Logout</button>
-      </div>
     </button>`;
   }
 
@@ -87,15 +81,6 @@ const Header = (function () {
     window.location.href = '/';
   }
 
-  function toggleProfileDropdown() {
-    const dd = document.getElementById('profileDropdown');
-    if (!dd) return;
-    const isVisible = dd.style.display !== 'none';
-    dd.style.display = isVisible ? 'none' : 'block';
-    const btn = document.getElementById('headerProfile');
-    if (btn) btn.setAttribute('aria-expanded', String(!isVisible));
-  }
-
   function toggleTheme() {
     if (typeof Themes !== 'undefined' && Themes.toggle) {
       Themes.toggle();
@@ -108,21 +93,10 @@ const Header = (function () {
     }
   }
 
-  function hideProfileDropdownOnClickOutside(e) {
-    const dd = document.getElementById('profileDropdown');
-    const btn = document.getElementById('headerProfile');
-    if (!dd || dd.style.display === 'none') return;
-    if (btn && btn.contains(e.target)) return;
-    if (dd.contains(e.target)) return;
-    dd.style.display = 'none';
-    if (btn) btn.setAttribute('aria-expanded', 'false');
-  }
-
-  function init({ center = '', extraActions = '', showProfile = true, container = null } = {}) {
-    render({ center, extraActions, showProfile, container });
-    document.addEventListener('click', hideProfileDropdownOnClickOutside);
+  function init({ center = '', extraActions = '', showLang = false, showTheme = true, showGitHub = false, showProfile = true, container = null } = {}) {
+    render({ center, extraActions, showLang, showTheme, showGitHub, showProfile, container });
     loadUser();
   }
 
-  return { init, render, loadUser, logout, toggleProfileDropdown, toggleTheme, toggleLangDropdown, get currentUser() { return currentUser; } };
+  return { init, render, loadUser, logout, toggleTheme, toggleLangDropdown, get currentUser() { return currentUser; } };
 })();

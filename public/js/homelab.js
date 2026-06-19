@@ -160,8 +160,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       menu.style.left = e.pageX + 'px';
       menu.style.top = e.pageY + 'px';
       menu.innerHTML = `
-        <div class="context-menu-item" data-action="edit">Edit</div>
-        <div class="context-menu-item" data-action="link">Link to...</div>
+        <div class="context-menu-item" data-action="edit">${I18N.t('edit')}</div>
+        <div class="context-menu-item" data-action="link">${I18N.t('linkTo')}</div>
         <div class="context-menu-sep"></div>
         <div class="context-menu-item" data-action="delete" style="color:var(--red)">Delete</div>
       `;

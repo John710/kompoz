@@ -148,7 +148,7 @@ const NetworkSidebar = (() => {
   function setHistory(list) {
     const container = document.getElementById('historyList');
     if (!list || !list.length) {
-      container.innerHTML = '<div class="pending-empty">No scan history</div>';
+      container.innerHTML = '<div class="pending-empty">' + I18N.t('noScanHistory') + '</div>';
       return;
     }
     container.innerHTML = '';

@@ -106,7 +106,12 @@ const I18N = (() => {
     githubTooltip: 'GitHub repository',
     resizeTooltip: 'Resize panel',
     passwordPlaceholder: 'Enter password',
-    noProjects: 'No projects'
+    noProjects: 'No projects',
+    noScanHistory: 'No scan history',
+    edit: 'Edit',
+    linkTo: 'Link to...',
+    ip: 'IP',
+    mac: 'MAC'
   };
 
   let dict = { [DEFAULT_LANG]: { ...fallback } };

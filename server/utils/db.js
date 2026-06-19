@@ -104,7 +104,7 @@ async function migrateAuth() {
     'INSERT INTO users (username, password_hash, name, is_admin) VALUES ($1, $2, $3, $4)',
     [AUTH_USER, hash, AUTH_USER, true]
   );
-  console.log('Migrated auth user:', AUTH_USER);
+  console.log('Auth user migration complete');
 }
 
 module.exports = { query, initDatabase, migrateAuth, pool };

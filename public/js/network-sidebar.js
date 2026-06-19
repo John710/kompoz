@@ -63,11 +63,13 @@ const NetworkSidebar = (() => {
     NetworkIcons.getAll().forEach(t => {
       const opt = document.createElement('option');
       opt.value = t;
-      opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+      opt.textContent = I18N.t('deviceType_' + t);
+      opt.dataset.i18n = 'deviceType_' + t;
       typeSelect.appendChild(opt);
       const opt2 = document.createElement('option');
       opt2.value = t;
-      opt2.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+      opt2.textContent = I18N.t('deviceType_' + t);
+      opt2.dataset.i18n = 'deviceType_' + t;
       filterType.appendChild(opt2);
     });
   }
@@ -98,7 +100,7 @@ const NetworkSidebar = (() => {
   function setPending(list) {
     const container = document.getElementById('pendingList');
     if (!list || !list.length) {
-      container.innerHTML = '<div class="pending-empty" data-i18n="noPendingDevices">No pending devices</div>';
+      container.innerHTML = '<div class="pending-empty">' + I18N.t('noPendingDevices') + '</div>';
       return;
     }
     container.innerHTML = '';

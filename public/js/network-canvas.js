@@ -37,6 +37,7 @@ const NetworkCanvas = (() => {
       .on('zoom', (e) => {
         zoomTransform = e.transform;
         container.attr('transform', e.transform);
+        drawGrid();
       });
     svg.call(zoom).on('dblclick.zoom', null);
 
@@ -69,20 +70,35 @@ const NetworkCanvas = (() => {
 
   function drawGrid() {
     const gridSize = 40;
-    const cols = Math.ceil(width / gridSize) + 2;
-    const rows = Math.ceil(height / gridSize) + 2;
     gridGroup.selectAll('*').remove();
-    for (let i = -1; i < cols; i++) {
+    if (!gridVisible) return;
+    const k = zoomTransform ? zoomTransform.k : 1;
+    const tx = zoomTransform ? zoomTransform.x : 0;
+    const ty = zoomTransform ? zoomTransform.y : 0;
+    // visible region in world coords
+    const vL = -tx / k;
+    const vT = -ty / k;
+    const vR = (width - tx) / k;
+    const vB = (height - ty) / k;
+    const sX = Math.floor(vL / gridSize) * gridSize;
+    const sY = Math.floor(vT / gridSize) * gridSize;
+    const eX = Math.ceil(vR / gridSize) * gridSize + gridSize;
+    const eY = Math.ceil(vB / gridSize) * gridSize + gridSize;
+    for (let x = sX; x <= eX; x += gridSize) {
       gridGroup.append('line')
-        .attr('x1', i * gridSize).attr('y1', -gridSize)
-        .attr('x2', i * gridSize).attr('y2', rows * gridSize)
-        .attr('stroke', 'var(--border)').attr('stroke-width', 0.5).attr('stroke-opacity', 0.3);
+        .attr('x1', x).attr('y1', sY)
+        .attr('x2', x).attr('y2', eY)
+        .attr('stroke', 'var(--border)')
+        .attr('stroke-width', 0.5 / k)
+        .attr('stroke-opacity', 0.3);
     }
-    for (let j = -1; j < rows; j++) {
+    for (let y = sY; y <= eY; y += gridSize) {
       gridGroup.append('line')
-        .attr('x1', -gridSize).attr('y1', j * gridSize)
-        .attr('x2', cols * gridSize).attr('y2', j * gridSize)
-        .attr('stroke', 'var(--border)').attr('stroke-width', 0.5).attr('stroke-opacity', 0.3);
+        .attr('x1', sX).attr('y1', y)
+        .attr('x2', eX).attr('y2', y)
+        .attr('stroke', 'var(--border)')
+        .attr('stroke-width', 0.5 / k)
+        .attr('stroke-opacity', 0.3);
     }
   }
 

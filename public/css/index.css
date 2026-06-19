@@ -27,12 +27,16 @@ html,body { height:100%; background:var(--bg); color:var(--text); font-family:va
 .projects-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:16px; }
 
 /* Project card */
-.proj-card {
+.proj-card { position:relative;
   background:var(--bg2); border:1px solid var(--border); border-radius:12px;
   padding:20px; cursor:pointer; transition:all .15s;
   display:flex; flex-direction:column; gap:10px; position:relative; overflow:hidden;
 }
 .proj-card:hover { background:var(--bg3); border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), 0 8px 24px rgba(0,0,0,.3); }
+.proj-card-actions { display:flex; gap:4px; position:absolute; top:10px; right:10px; opacity:0; transition:opacity .15s; }
+.proj-card:hover .proj-card-actions { opacity:1; }
+.proj-card-action { display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:6px; color:var(--text2); background:var(--bg2); border:1px solid var(--border); transition:all .15s; }
+.proj-card-action:hover { color:var(--accent); background:var(--bg3); border-color:var(--accent); }
 
 .proj-card-name { font-size:16px; font-weight:700; color:var(--text); word-break:break-word; }
 .proj-card-meta { display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:11px; color:var(--text3); }

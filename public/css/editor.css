@@ -1,0 +1,20 @@
+.sidebar-delete-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 6px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--text3); cursor: pointer; transition: all .15s;
+}
+.sidebar-delete-btn:hover { background: rgba(255,91,91,.12); color: var(--red); border-color: var(--red); }
+.proj-delete {
+  display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 5px;
+  color: var(--text3); cursor: pointer; transition: all .12s;
+  margin-left: auto; opacity: 0;
+}
+.proj-dropdown-item:hover .proj-delete { opacity: 1; }
+.proj-delete:hover { background: rgba(255,91,91,.12); color: var(--red); }
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}

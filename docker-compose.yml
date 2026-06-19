@@ -20,7 +20,7 @@ services:
       start_period: 10s
 
   kompoz:
-    image: ghcr.io/John710/kompoz:latest
+    image: ghcr.io/john710/kompoz:latest
     container_name: kompoz
     restart: unless-stopped
     depends_on:
@@ -50,3 +50,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+volumes:
+  db_data:

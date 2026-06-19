@@ -63,7 +63,10 @@ const App = (() => {
   }
 
   function _renderProjectSelector() {
-    document.getElementById('projectSelectorName').textContent = State.currentProject || I18N.t('selectProject');
+    const el = document.getElementById('projectSelectorName');
+    el.textContent = State.currentProject || I18N.t('selectProject');
+    if (State.currentProject) el.removeAttribute('data-i18n');
+    else el.setAttribute('data-i18n', 'selectProject');
   }
 
   function toggleProjectDropdown() {

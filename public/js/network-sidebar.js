@@ -100,7 +100,7 @@ const NetworkSidebar = (() => {
   function setPending(list) {
     const container = document.getElementById('pendingList');
     if (!list || !list.length) {
-      container.innerHTML = '<div class="pending-empty">' + I18N.t('noPendingDevices') + '</div>';
+      container.innerHTML = '<div class="pending-empty" data-i18n="noPendingDevices">' + I18N.t('noPendingDevices') + '</div>';
       return;
     }
     container.innerHTML = '';
@@ -111,7 +111,7 @@ const NetworkSidebar = (() => {
         <div class="status-dot ${d.online ? 'online' : d.online === false ? 'offline' : ''}"></div>
         <div style="flex:1;min-width:0;">
           <div class="ip">${d.ip}</div>
-          <div class="mac">${d.mac || 'Unknown MAC'}</div>
+          <div class="mac">${d.mac || I18N.t('unknownMAC')}</div>
         </div>
         <div class="actions">
           <button class="btn btn-primary btn-sm" data-action="add" data-id="${d.id}">+</button>
@@ -148,7 +148,7 @@ const NetworkSidebar = (() => {
   function setHistory(list) {
     const container = document.getElementById('historyList');
     if (!list || !list.length) {
-      container.innerHTML = '<div class="pending-empty">' + I18N.t('noScanHistory') + '</div>';
+      container.innerHTML = '<div class="pending-empty" data-i18n="noScanHistory">' + I18N.t('noScanHistory') + '</div>';
       return;
     }
     container.innerHTML = '';
@@ -159,7 +159,7 @@ const NetworkSidebar = (() => {
       item.innerHTML = `
         <div style="flex:1;min-width:0;">
           <div class="ip">${h.cidr}</div>
-          <div class="mac">${date} — ${h.devices_found || 0} found</div>
+          <div class="mac">${date} — ${h.devices_found || 0} ${I18N.t('found')}</div>
         </div>
       `;
       container.appendChild(item);

@@ -388,7 +388,7 @@ window.addEventListener('i18n-change', () => {
 
 document.addEventListener('DOMContentLoaded', async () => {
   await I18N.init();
-  Header.render({
+  Header.init({
     container: document.querySelector('.layout'),
     showLang: true,
     showGitHub: true,

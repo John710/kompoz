@@ -66,7 +66,9 @@
 <script src="/js/parser.js"></script>
 <script>
 const project = new URLSearchParams(location.search).get('project') || localStorage.getItem('lastProject');
-document.getElementById('projLabel').textContent = project || '—';
+// Project label placeholder removed — header.js handles header content
+// const projectLabel = document.getElementById('projLabel');
+// if (projectLabel) projectLabel.textContent = project || '—';
 
 let graphData = null;
 let zoom, gMain;

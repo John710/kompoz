@@ -283,6 +283,14 @@ body { visibility: hidden; }
   border-radius: 6px;
 }
 
+/* Ensure btn-sm inside header-actions keeps its small size */
+.header-actions .btn-sm {
+  padding: 0 10px;
+  height: 28px;
+  font-size: 11px;
+  border-radius: 6px;
+}
+
 /* Fade-down animation used by dropdowns */
 @keyframes fadeDown {
   from {

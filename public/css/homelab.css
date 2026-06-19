@@ -3,7 +3,7 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
 .layout { display:grid; grid-template-rows:52px 1fr; height:100vh; }
 
 /* Header (matches map.html) */
-.header { display:flex; align-items:center; gap:12px; padding:0 16px; background:var(--bg2); border-bottom:1px solid var(--border); }
+.header { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 16px; height:52px; background:var(--bg2); border-bottom:1px solid var(--border); }
 .header-logo { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:700; color:var(--text); }
 .header-logo svg { color:var(--accent); }
 .btn { display:inline-flex; align-items:center; gap:5px; padding:0 10px; height:34px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text2); font-family:var(--display); font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; text-decoration:none; }

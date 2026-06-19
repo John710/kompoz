@@ -267,9 +267,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
   await I18N.init();
   Header.render();
+  I18N.refresh();
   loadUser();
   Themes.init();
-  I18N.refresh();
   loadVersion();
   checkUpdate();
   document.body.style.visibility = 'visible';

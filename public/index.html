@@ -217,9 +217,9 @@ window.addEventListener('i18n-change', () => {
 document.addEventListener('DOMContentLoaded', async () => {
   await I18N.init();
   Header.render({ extraActions: '<a class="btn btn-sm" href="/map.html" data-i18n="networkMap">Network Map</a>' });
+  I18N.refresh();
   await Header.loadUser();
   Themes.init();
-  I18N.refresh();
   loadProjects();
   loadVersion();
   checkUpdate();

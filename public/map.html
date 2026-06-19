@@ -386,10 +386,12 @@ window.addEventListener('i18n-change', () => {
 
 document.addEventListener('DOMContentLoaded', async () => {
   await I18N.init();
-  Header.render({ center: '<span data-i18n="containerMap">Container Map</span>' });
+  Header.render({
+    center: '<a class="btn btn-sm" href="/homelab.html" data-i18n="networkMap">Network Map</a><a class="btn btn-sm" href="/map.html" data-i18n="containerMap">Container Map</a>'
+  });
+  I18N.refresh();
   loadUser();
   Themes.init();
-  I18N.refresh();
   loadMap();
   loadVersion();
   checkUpdate();

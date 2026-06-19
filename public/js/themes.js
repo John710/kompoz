@@ -22,8 +22,6 @@ const Themes = (() => {
       '--purple': '#c084fc',
       '--root-tag': '#ff9d5c',
       '--comp-tag': '#5b8cff',
-      '--net-tag': '#ff9d5c',
-      '--vol-tag': '#5b8cff',
     },
     light: {
       '--bg': '#ffffff',
@@ -42,8 +40,6 @@ const Themes = (() => {
       '--purple': '#8250df',
       '--root-tag': '#bf8700',
       '--comp-tag': '#0969da',
-      '--net-tag': '#bc4c00',
-      '--vol-tag': '#1a7f37',
     }
   };
 
@@ -61,9 +57,7 @@ const Themes = (() => {
     if (!t) return;
     currentTheme = themeName;
     localStorage.setItem(STORAGE_KEY, themeName);
-    const root = document.documentElement;
-    Object.entries(t).forEach(([k, v]) => root.style.setProperty(k, v));
-    root.setAttribute('data-theme', themeName);
+    document.documentElement.setAttribute('data-theme', themeName);
     _updateIcons();
   }
 

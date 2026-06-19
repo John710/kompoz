@@ -182,11 +182,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Toolbar
-  document.getElementById('toolPan').addEventListener('click', () => {
-    NetworkCanvas.setTool('pan');
-    document.querySelectorAll('.mini-toolbar button').forEach(b => b.classList.remove('active'));
-    document.getElementById('toolPan').classList.add('active');
-  });
   document.getElementById('toolSelect').addEventListener('click', () => {
     NetworkCanvas.setTool('select');
     document.querySelectorAll('.mini-toolbar button').forEach(b => b.classList.remove('active'));

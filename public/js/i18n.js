@@ -7,7 +7,7 @@ const I18N = (() => {
   // Minimal inline fallback so UI isn't blank before fetch
   const fallback = {
     appTitle: 'Kompoz', loading: 'Loading...', selectProject: 'Select project',
-    refresh: 'Refresh', map: 'Map', pan: 'Pan', select: 'Select', zoomIn: 'Zoom In', zoomOut: 'Zoom Out', grid: 'Grid', fit: 'Fit', noProjectsTitle: 'No projects',
+    refresh: 'Refresh', map: 'Map', panSelect: 'Pan / Select', zoomIn: 'Zoom In', zoomOut: 'Zoom Out', grid: 'Grid', fit: 'Fit', noProjectsTitle: 'No projects',
     noProjectsHint: 'Create your first project to get started',
     projectCountLabel_one: 'project', projectCountLabel_few: 'projects', projectCountLabel_many: 'projects', deleteProject: 'Delete project',
     save: 'Save', langLabel: 'Language', themeLabel: 'Theme',

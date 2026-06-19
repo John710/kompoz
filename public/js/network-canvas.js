@@ -1,5 +1,17 @@
 const NetworkCanvas = (() => {
   const svg = d3.select('#networkSvg');
+  const defs = svg.append('defs');
+  defs.append('pattern')
+    .attr('id', 'gridPattern')
+    .attr('width', 40)
+    .attr('height', 40)
+    .attr('patternUnits', 'userSpaceOnUse')
+    .append('path')
+    .attr('d', 'M 40 0 L 0 0 0 40')
+    .attr('fill', 'none')
+    .attr('stroke', 'var(--border)')
+    .attr('stroke-width', 0.5)
+    .attr('stroke-opacity', 0.3);
   const container = svg.append('g').attr('class', 'container');
   const gridGroup = container.append('g').attr('class', 'grid');
   const edgesGroup = container.append('g').attr('class', 'edges');
@@ -37,7 +49,6 @@ const NetworkCanvas = (() => {
       .on('zoom', (e) => {
         zoomTransform = e.transform;
         container.attr('transform', e.transform);
-        drawGrid();
       });
     svg.call(zoom).on('dblclick.zoom', null);
 
@@ -69,37 +80,14 @@ const NetworkCanvas = (() => {
   }
 
   function drawGrid() {
-    const gridSize = 40;
     gridGroup.selectAll('*').remove();
     if (!gridVisible) return;
-    const k = zoomTransform ? zoomTransform.k : 1;
-    const tx = zoomTransform ? zoomTransform.x : 0;
-    const ty = zoomTransform ? zoomTransform.y : 0;
-    // visible region in world coords
-    const vL = -tx / k;
-    const vT = -ty / k;
-    const vR = (width - tx) / k;
-    const vB = (height - ty) / k;
-    const sX = Math.floor(vL / gridSize) * gridSize;
-    const sY = Math.floor(vT / gridSize) * gridSize;
-    const eX = Math.ceil(vR / gridSize) * gridSize + gridSize;
-    const eY = Math.ceil(vB / gridSize) * gridSize + gridSize;
-    for (let x = sX; x <= eX; x += gridSize) {
-      gridGroup.append('line')
-        .attr('x1', x).attr('y1', sY)
-        .attr('x2', x).attr('y2', eY)
-        .attr('stroke', 'var(--border)')
-        .attr('stroke-width', 0.5 / k)
-        .attr('stroke-opacity', 0.3);
-    }
-    for (let y = sY; y <= eY; y += gridSize) {
-      gridGroup.append('line')
-        .attr('x1', sX).attr('y1', y)
-        .attr('x2', eX).attr('y2', y)
-        .attr('stroke', 'var(--border)')
-        .attr('stroke-width', 0.5 / k)
-        .attr('stroke-opacity', 0.3);
-    }
+    gridGroup.append('rect')
+      .attr('x', -100000)
+      .attr('y', -100000)
+      .attr('width', 200000)
+      .attr('height', 200000)
+      .attr('fill', 'url(#gridPattern)');
   }
 
   function render(dataNodes, dataEdges) {

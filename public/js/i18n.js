@@ -9,11 +9,11 @@ const I18N = (() => {
     appTitle: 'Kompoz', loading: 'Loading...', selectProject: 'Select project',
     refresh: 'Refresh', map: 'Map', noProjectsTitle: 'No projects',
     noProjectsHint: 'Create your first project to get started',
-    projectCountLabel: 'projects', deleteProject: 'Delete project',
+    projectCountLabel_one: 'project', projectCountLabel_few: 'projects', projectCountLabel_many: 'projects', deleteProject: 'Delete project',
     save: 'Save', langLabel: 'Language', themeLabel: 'Theme',
     lightTheme: 'Light', darkTheme: 'Dark', newFile: 'New file',
     searchPlaceholder: 'Search...', noFiles: 'No files.<br>Create the first file.',
-    fileCount: 'files', fileTypesTitle: 'File types',
+    fileCount_one: 'file', fileCount_few: 'files', fileCount_many: 'files', fileTypesTitle: 'File types',
     legendRoot: 'root — main compose', legendCompose: 'compose/ — service file',
     legendEnv: '.env — variables', legendAppdata: 'appdata/ — configs',
     legendSecret: 'secrets/ — secrets', statusTitle: 'Status',
@@ -206,7 +206,19 @@ const I18N = (() => {
     return message;
   }
 
-  return { init, t, setLang, getLang, getAvailableLangs, translateDclint, refresh: _translateDOM };
+  function pluralize(n, key) {
+    const one = t(key + '_one');
+    const few = t(key + '_few');
+    const many = t(key + '_many');
+    const abs = Math.abs(n) % 100;
+    const mod10 = abs % 10;
+    if (abs > 10 && abs < 20) return many;
+    if (mod10 > 1 && mod10 < 5) return few;
+    if (mod10 === 1) return one;
+    return many;
+  }
+
+  return { init, t, setLang, getLang, getAvailableLangs, translateDclint, refresh: _translateDOM, pluralize };
 })();
 
 // Global helper for rendering language dropdown

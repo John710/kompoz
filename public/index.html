@@ -120,7 +120,7 @@ function renderProjects() {
     return;
   }
 
-  countEl.textContent = `${projects.length} ${I18N.t('projectCountLabel') || 'проектов'}`;
+  countEl.textContent = `${projects.length} ${I18N.pluralize(projects.length, 'projectCountLabel')}`;
 
   let html = '';
   projects.forEach(p => {
@@ -134,7 +134,7 @@ function renderProjects() {
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
             <polyline points="14 2 14 8 20 8"/>
           </svg>
-          <span>${p.fileCount || 0} ${I18N.t('fileCount')}</span>
+          <span>${p.fileCount || 0} ${I18N.pluralize(p.fileCount || 0, 'fileCount')}</span>
         </div>
       </div>
     `;

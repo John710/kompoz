@@ -80,7 +80,7 @@ const Sidebar = (() => {
   }
 
   function setFileCount(n) {
-    document.getElementById('fileCount').textContent = `${n} ${I18N.t('fileCount')}`;
+    document.getElementById('fileCount').textContent = `${n} ${I18N.pluralize(n, 'fileCount')}`;
   }
 
   function _esc(s) { return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }

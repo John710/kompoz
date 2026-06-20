@@ -377,8 +377,8 @@ async function checkUpdate() {
     const v = await vr.json();
     const l = await lr.json();
     if (!v.version || !l.tag) return;
-    const cur = v.version.replace(/^v/, '').split('.').map(Number);
-    const lat = l.tag.replace(/^v/, '').split('.').map(Number);
+    const cur = v.version.replace(/^v/, '').replace(/-.*/, '').split('.').map(Number);
+    const lat = l.tag.replace(/^v/, '').replace(/-.*/, '').split('.').map(Number);
     const newer = lat[0]>cur[0] || (lat[0]===cur[0] && lat[1]>cur[1]) || (lat[0]===cur[0] && lat[1]===cur[1] && lat[2]>cur[2]);
     if (newer) {
       const gh = document.querySelector('a[href*="github.com"]');

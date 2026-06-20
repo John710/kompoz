@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../utils/db');
-const { scanCidr, getScanProgress } = require('../utils/network-scanner');
+const { scanCidr, getScanProgress, parseCidr } = require('../utils/network-scanner');
 const { checkDevice, checkAll } = require('../utils/status-checker');
 
 // Guard: network features require DATABASE_URL
@@ -17,6 +17,16 @@ router.post('/scan', async (req, res) => {
   try {
     const { cidr } = req.body || {};
     if (!cidr) return res.status(400).json({ error: 'CIDR is required' });
+
+    // Pre-validate CIDR (check size before spawning scan)
+    try {
+      parseCidr(cidr);
+    } catch (err) {
+      if (err.message === 'errCidrTooLarge') {
+        return res.status(400).json({ errorKey: 'errCidrTooLarge' });
+      }
+      return res.status(400).json({ error: 'Invalid CIDR format' });
+    }
 
     scanCidr(cidr)
       .then(() => console.log('Scan completed for', cidr))

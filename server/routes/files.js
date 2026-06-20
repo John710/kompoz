@@ -8,7 +8,7 @@ const { getProjectDir, safeResolvePath, listYamlFiles } = require('../utils/fs')
 const router  = express.Router();
 const YAML_RE = /\.(yml|yaml)$/;
 
-const ALLOWED_EXT_DEFAULT = /\.(yml|yaml|env|conf|json|txt|md|ini|properties|bak)$/i;
+const ALLOWED_EXT_DEFAULT = /\.(yml|yaml|env|conf|json|txt|md|ini|properties)$/i;
 const EXT_WHITELIST = process.env.FILE_EXT_WHITELIST
   ? new RegExp(process.env.FILE_EXT_WHITELIST, 'i')
   : (process.env.ALLOW_ALL_EXTENSIONS === 'true' ? null : ALLOWED_EXT_DEFAULT);
@@ -45,7 +45,7 @@ router.get('/', (req, res) => {
 
     res.json({ files });
   } catch (err) {
-    console.error(err);
+    console.error('Files error:', err.message);
     res.status(500).json({ error: 'Internal server error', errorKey: 'errorLoadFiles' });
   }
 });
@@ -72,7 +72,7 @@ router.get('/all', (req, res) => {
 
     res.json({ files: result });
   } catch (err) {
-    console.error(err);
+    console.error('Files error:', err.message);
     res.status(500).json({ error: 'Internal server error', errorKey: 'errorLoadFiles' });
   }
 });
@@ -86,7 +86,7 @@ router.get('/read', (req, res) => {
     if (!fs.existsSync(fullPath)) return res.status(404).json({ error: 'File not found', errorKey: 'errFileNotFound' });
     res.json({ content: fs.readFileSync(fullPath, 'utf8'), path: fp });
   } catch (err) {
-    console.error(err);
+    console.error('Files error:', err.message);
     res.status(500).json({ error: 'Internal server error', errorKey: 'errorOpenFile' });
   }
 });
@@ -105,7 +105,7 @@ router.post('/save', (req, res) => {
     fs.writeFileSync(fullPath, content, 'utf8');
     res.json({ ok: true });
   } catch (err) {
-    console.error(err);
+    console.error('Files error:', err.message);
     res.status(500).json({ error: 'Internal server error', errorKey: 'errorSave' });
   }
 });
@@ -124,7 +124,7 @@ router.post('/create', (req, res) => {
     fs.writeFileSync(fullPath, content || '', 'utf8');
     res.json({ ok: true });
   } catch (err) {
-    console.error(err);
+    console.error('Files error:', err.message);
     res.status(500).json({ error: 'Internal server error', errorKey: 'errorCreateFile' });
   }
 });
@@ -140,7 +140,7 @@ router.delete('/', (req, res) => {
     if (fs.existsSync(fullPath + '.bak')) fs.unlinkSync(fullPath + '.bak');
     res.json({ ok: true });
   } catch (err) {
-    console.error(err);
+    console.error('Files error:', err.message);
     res.status(500).json({ error: 'Internal server error', errorKey: 'errorDelete' });
   }
 });
@@ -156,7 +156,7 @@ router.post('/restore', (req, res) => {
     fs.copyFileSync(bak, fullPath);
     res.json({ ok: true, content: fs.readFileSync(fullPath, 'utf8') });
   } catch (err) {
-    console.error(err);
+    console.error('Files error:', err.message);
     res.status(500).json({ error: 'Internal server error', errorKey: 'errorRestore' });
   }
 });
@@ -216,7 +216,7 @@ router.post('/lint', (req, res) => {
 
     res.json({ messages });
   } catch (err) {
-    console.error(err);
+    console.error('Files error:', err.message);
     res.status(500).json({ error: 'Internal server error', errorKey: 'errorLoadFiles' });
   }
 });

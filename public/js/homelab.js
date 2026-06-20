@@ -9,7 +9,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function api(path, opts = {}) {
     const isGet = !opts.method || opts.method === 'GET';
     const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, cache: isGet ? 'no-store' : undefined, ...opts });
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+      const text = await res.text();
+      try {
+        const json = JSON.parse(text);
+        if (json.errorKey) throw new Error(I18N.t(json.errorKey));
+      } catch (_) {}
+      throw new Error(text);
+    }
     return res.json();
   }
 

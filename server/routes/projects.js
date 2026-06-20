@@ -24,7 +24,7 @@ router.post('/', (req, res) => {
     if (!can) return res.status(400).json({ error: 'No available multi-mode mount point.', errorKey: 'errNoMount' });
 
     const { name } = req.body;
-    if (!name || !/^[a-zA-Z0_\-]+$/.test(name))
+    if (!name || !/^[a-zA-Z0-9_\-]+$/.test(name))
       return res.status(400).json({ error: 'Invalid name.', errorKey: 'errInvalidName' });
 
     const projectDir = safeResolvePath(mountRoot, name);

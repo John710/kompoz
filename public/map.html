@@ -61,6 +61,21 @@
   </div>
 </div>
 
+<!-- Open in Editor modal -->
+<div class="map-modal" id="editorModal" style="display:none">
+  <div class="map-modal-backdrop" onclick="hideEditorModal()"></div>
+  <div class="map-modal-box">
+    <div class="map-modal-title" data-i18n="openInEditor">Open in editor?</div>
+    <div class="map-modal-body">
+      <span data-i18n="fileLabel">File</span>: <code id="editorModalFile" class="map-modal-file"></code>
+    </div>
+    <div class="map-modal-actions">
+      <button class="map-modal-btn map-modal-btn-primary" id="editorModalConfirm" data-i18n="openInEditorBtn">Open</button>
+      <button class="map-modal-btn" onclick="hideEditorModal()" data-i18n="cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="/js/themes.js"></script>
 <script src="/js/i18n.js"></script>
@@ -253,9 +268,7 @@ function renderTree() {
       linkGroup.selectAll('line').attr('stroke-opacity', 0.35).attr('stroke-width', 1.2);
     })
     .on('click', (ev, d) => {
-      if (confirm(I18N.t('openInEditor'))) {
-        location.href = '/editor.html?project=' + encodeURIComponent(project);
-      }
+      showEditorModal(d.sourceFile || '');
     });
 
   nodeSel.each(function(d) {
@@ -318,22 +331,41 @@ function resolveEnv(str) {
 // Tooltip
 function showTip(event, d) {
   const tt = document.getElementById('tooltip');
-  let html = `<div class="tt-title">${d.name}</div>`;
+  tt.innerHTML = '';
+
+  const title = document.createElement('div');
+  title.className = 'tt-title';
+  title.textContent = d.name;
+  tt.appendChild(title);
+
+  const addRow = (label, value, bold) => {
+    const row = document.createElement('div');
+    row.className = 'tt-row';
+    if (label) row.appendChild(document.createTextNode(label + ' '));
+    if (bold) {
+      const b = document.createElement('b');
+      b.textContent = value;
+      row.appendChild(b);
+    } else {
+      row.appendChild(document.createTextNode(value));
+    }
+    tt.appendChild(row);
+  };
+
   if (d._type === 'svc') {
-    if (d.image)         html += `<div class="tt-row">${I18N.t('imageLabel')} <b>${d.image}</b></div>`;
-    if (d.ports?.length) html += `<div class="tt-row">${I18N.t('portsLabel')} <b>${d.ports.slice(0,3).map(resolveEnv).join(', ')}${d.ports.length>3?'…':''}</b></div>`;
-    if (d.networks?.length) html += `<div class="tt-row">${I18N.t('networksLabel')} <b>${d.networks.join(', ')}</b></div>`;
-    html += `<div class="tt-row">${I18N.t('fileLabel')} <b>${d.sourceFile}</b></div>`;
+    if (d.image)         addRow(I18N.t('imageLabel'), d.image, true);
+    if (d.ports?.length) addRow(I18N.t('portsLabel'), d.ports.slice(0,3).map(resolveEnv).join(', ') + (d.ports.length>3?'…':''), true);
+    if (d.networks?.length) addRow(I18N.t('networksLabel'), d.networks.join(', '), true);
+    addRow(I18N.t('fileLabel'), d.sourceFile, true);
   } else if (d._type === 'net') {
-    html += `<div class="tt-row">${I18N.t('driverLabel')} <b>${d.driver}</b></div>`;
-    if (d.subnet)   html += `<div class="tt-row">${I18N.t('subnetLabel')} <b>${d.subnet}</b></div>`;
-    if (d.internal) html += `<div class="tt-row"><b>${I18N.t('internalLabel')}</b></div>`;
-    if (d.external) html += `<div class="tt-row"><b>${I18N.t('externalLabel')}</b></div>`;
+    addRow(I18N.t('driverLabel'), d.driver, true);
+    if (d.subnet)   addRow(I18N.t('subnetLabel'), d.subnet, true);
+    if (d.internal) addRow(null, I18N.t('internalLabel'), true);
+    if (d.external) addRow(null, I18N.t('externalLabel'), true);
   } else {
-    html += `<div class="tt-row">${I18N.t('namedVolume')}</div>`;
-    html += `<div class="tt-row">${I18N.t('fileLabel')} <b>${d.sourceFile}</b></div>`;
+    addRow(null, I18N.t('namedVolume'), false);
+    addRow(I18N.t('fileLabel'), d.sourceFile, true);
   }
-  tt.innerHTML = html;
   tt.classList.add('vis');
   moveTip(event);
 }
@@ -354,6 +386,21 @@ function moveTip(event) {
   tt.style.top  = Math.min(y, window.innerHeight - 160) + 'px';
 }
 function hideTip() { document.getElementById('tooltip').classList.remove('vis'); }
+
+function showEditorModal(filePath) {
+  const modal = document.getElementById('editorModal');
+  const fileEl = document.getElementById('editorModalFile');
+  const confirmBtn = document.getElementById('editorModalConfirm');
+  fileEl.textContent = filePath || 'docker-compose.yml';
+  confirmBtn.onclick = () => {
+    hideEditorModal();
+    location.href = '/editor.html?project=' + encodeURIComponent(project) + '&file=' + encodeURIComponent(filePath || 'docker-compose.yml');
+  };
+  modal.style.display = '';
+}
+function hideEditorModal() {
+  document.getElementById('editorModal').style.display = 'none';
+}
 
 function toggleFilter(t) {
   filters[t] = !filters[t];
@@ -424,8 +471,8 @@ async function checkUpdate() {
     const v = await vr.json();
     const l = await lr.json();
     if (!v.version || !l.tag) return;
-    const cur = v.version.replace(/^v/, '').split('.').map(Number);
-    const lat = l.tag.replace(/^v/, '').split('.').map(Number);
+    const cur = v.version.replace(/^v/, '').replace(/-.*/, '').split('.').map(Number);
+    const lat = l.tag.replace(/^v/, '').replace(/-.*/, '').split('.').map(Number);
     const newer = lat[0]>cur[0] || (lat[0]===cur[0] && lat[1]>cur[1]) || (lat[0]===cur[0] && lat[1]===cur[1] && lat[2]>cur[2]);
     if (newer) {
       const gh = document.querySelector('a[href*="github.com"]');

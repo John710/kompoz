@@ -146,14 +146,14 @@ const RightPanel = (() => {
         const badges = [];
         if (net.external) badges.push('<span class="rp-badge ext">external</span>');
         if (net.internal) badges.push('<span class="rp-badge int">internal</span>');
-        if (net.driver)   badges.push(`<span class="rp-badge">${net.driver}</span>`);
+        if (net.driver)   badges.push(`<span class="rp-badge">${I18N.escHtml(net.driver)}</span>`);
         html += `<div class="rp-item" onclick="RightPanel.insertNetwork('${_esc(net.name)}')" title="${I18N.t('insertHint')}">
           <div class="rp-item-row">
             <div class="rp-dot net"></div>
-            <span class="rp-item-name">${net.name}</span>
+            <span class="rp-item-name">${I18N.escHtml(net.name)}</span>
             ${badges.join('')}
           </div>
-          ${net.subnet ? `<div class="rp-item-sub">${net.subnet}</div>` : ''}
+          ${net.subnet ? `<div class="rp-item-sub">${I18N.escHtml(net.subnet)}</div>` : ''}
           <div class="rp-item-hint">${I18N.t('insertHint')}</div>
         </div>`;
       });
@@ -223,7 +223,7 @@ const RightPanel = (() => {
             <div class="rp-dot env"></div>
             <span class="rp-item-name">$${v.key}</span>
           </div>
-          ${v.val ? `<div class="rp-item-sub">${v.val.slice(0,28)}${v.val.length>28?'…':''}</div>` : ''}
+          ${v.val ? `<div class="rp-item-sub">${I18N.escHtml(v.val).slice(0,28)}${v.val.length>28?'…':''}</div>` : ''}
           <div class="rp-item-hint">${I18N.t('insertHint')}</div>
         </div>`;
       });
@@ -248,7 +248,7 @@ const RightPanel = (() => {
       html += `<div class="rp-item" onclick="RightPanel.insertSecret('${_esc(s.name)}')" title="${I18N.t('insertHint')}">
         <div class="rp-item-row">
           <div class="rp-dot secret"></div>
-          <span class="rp-item-name">${s.name}</span>
+          <span class="rp-item-name">${I18N.escHtml(s.name)}</span>
         </div>
         <div class="rp-item-hint">${I18N.t('insertIntoService')}</div>
       </div>`;

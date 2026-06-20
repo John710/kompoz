@@ -111,6 +111,19 @@ html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text
 .context-menu-item:hover { background:var(--bg3); }
 .context-menu-sep { height:1px; background:var(--border); margin:4px 0; }
 
+/* Modal */
+.map-modal { position:fixed; inset:0; z-index:2000; display:flex; align-items:center; justify-content:center; }
+.map-modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,.45); }
+.map-modal-box { position:relative; width:380px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; box-shadow:0 16px 48px rgba(0,0,0,.5); padding:20px; animation:fadeDown .15s ease; }
+.map-modal-title { font-size:15px; font-weight:700; color:var(--text); margin-bottom:12px; }
+.map-modal-body { font-size:13px; color:var(--text2); margin-bottom:20px; }
+.map-modal-file { font-family:var(--mono); font-size:12px; background:var(--bg3); padding:2px 6px; border-radius:4px; color:var(--accent); }
+.map-modal-actions { display:flex; gap:8px; justify-content:flex-end; }
+.map-modal-btn { padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text2); font-family:var(--display); font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
+.map-modal-btn:hover { background:var(--bg3); color:var(--text); }
+.map-modal-btn-primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+.map-modal-btn-primary:hover { background:var(--accent); filter:brightness(1.1); }
+
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}

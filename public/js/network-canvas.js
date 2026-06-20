@@ -230,17 +230,41 @@ const NetworkCanvas = (() => {
 
   function showNodeTooltip(e, d) {
     const tt = document.getElementById('tooltip');
+    tt.innerHTML = '';
     const ports = (d.ports || []).join(', ') || '—';
-    tt.innerHTML = `
-      <div style="font-weight:600;margin-bottom:4px;">${d.name || d.ip || 'Unknown'}</div>
-      <div style="font-family:var(--mono);font-size:11px;color:var(--text2);">
-        <div>IP: ${d.ip || '—'}</div>
-        <div>MAC: ${d.mac || '—'}</div>
-        <div>Type: ${d.device_type || 'unknown'}</div>
-        <div>Status: ${d.online ? '<span style="color:var(--green)">Online</span>' : '<span style="color:var(--red)">Offline</span>'}</div>
-        <div>Ports: ${ports}</div>
-      </div>
-    `;
+
+    const title = document.createElement('div');
+    title.style.fontWeight = '600';
+    title.style.marginBottom = '4px';
+    title.textContent = d.name || d.ip || 'Unknown';
+    tt.appendChild(title);
+
+    const body = document.createElement('div');
+    body.style.fontFamily = 'var(--mono)';
+    body.style.fontSize = '11px';
+    body.style.color = 'var(--text2)';
+
+    const addRow = (label, value) => {
+      const row = document.createElement('div');
+      row.textContent = label + value;
+      body.appendChild(row);
+    };
+
+    addRow('IP: ', d.ip || '—');
+    addRow('MAC: ', d.mac || '—');
+    addRow('Type: ', d.device_type || 'unknown');
+
+    const statusRow = document.createElement('div');
+    statusRow.appendChild(document.createTextNode('Status: '));
+    const statusSpan = document.createElement('span');
+    statusSpan.textContent = d.online ? 'Online' : 'Offline';
+    statusSpan.style.color = d.online ? 'var(--green)' : 'var(--red)';
+    statusRow.appendChild(statusSpan);
+    body.appendChild(statusRow);
+
+    addRow('Ports: ', ports);
+    tt.appendChild(body);
+
     tt.style.left = (e.pageX + 12) + 'px';
     tt.style.top = (e.pageY + 12) + 'px';
     tt.classList.add('visible');

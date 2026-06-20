@@ -243,7 +243,12 @@ const I18N = (() => {
     return many;
   }
 
-  return { init, t, setLang, getLang, getAvailableLangs, translateDclint, refresh: _translateDOM, pluralize };
+  function escHtml(s) {
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    return String(s).replace(/[&<>"']/g, c => map[c]);
+  }
+
+  return { init, t, setLang, getLang, getAvailableLangs, translateDclint, refresh: _translateDOM, pluralize, escHtml };
 })();
 
 // Global helper for rendering language dropdown

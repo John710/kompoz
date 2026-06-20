@@ -149,7 +149,7 @@ const Editor = (() => {
       appdata: 'appdata/', secret: 'secrets/'
     };
     document.getElementById('toolbarPath').innerHTML =
-      `<span style="color:${colors[type] || 'var(--text2)'}">${labels[type] || type}</span>&nbsp;${name}`;
+      `<span style="color:${colors[type] || 'var(--text2)'}">${labels[type] || type}</span>&nbsp;${I18N.escHtml(name)}`;
   }
 
   function updateLineNumbers() {}

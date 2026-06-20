@@ -110,8 +110,8 @@ const NetworkSidebar = (() => {
       item.innerHTML = `
         <div class="status-dot ${d.online ? 'online' : d.online === false ? 'offline' : ''}"></div>
         <div style="flex:1;min-width:0;">
-          <div class="ip">${d.ip}</div>
-          <div class="mac">${d.mac || I18N.t('unknownMAC')}</div>
+          <div class="ip">${I18N.escHtml(d.ip)}</div>
+          <div class="mac">${I18N.escHtml(d.mac || I18N.t('unknownMAC'))}</div>
         </div>
         <div class="actions">
           <button class="btn btn-primary btn-sm" data-action="add" data-id="${d.id}">+</button>

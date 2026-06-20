@@ -10,6 +10,7 @@ const COMMON_PORTS = [22, 80, 443, 8080, 1883, 3389, 5900, 8123];
 const BATCH_SIZE = 20;
 const TCP_TIMEOUT = 500;
 const PING_TIMEOUT = 1500;
+const MAX_SCAN_HOSTS = 4096;
 
 // RFC 1918 private ranges
 const PRIVATE_RANGES = [
@@ -41,6 +42,10 @@ function parseCidr(cidr) {
   const mask = 0xFFFFFFFF << (32 - prefix);
   const network = (ip & mask) >>> 0;
   const broadcast = (network | (~mask >>> 0)) >>> 0;
+  const hostCount = broadcast - network - 1;
+  if (hostCount > MAX_SCAN_HOSTS) {
+    throw new Error('errCidrTooLarge');
+  }
   const hosts = [];
   for (let h = network + 1; h < broadcast; h++) {
     hosts.push(longToIp(h));

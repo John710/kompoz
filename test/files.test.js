@@ -43,7 +43,7 @@ test('ALLOWED_EXT_DEFAULT matches allowed extensions', () => {
   const allowed = [
     'docker-compose.yml', 'config.yaml', '.env', 'nginx.conf',
     'settings.json', 'readme.txt', 'notes.md', 'php.ini',
-    'app.properties', 'backup.bak',
+    'app.properties',
   ];
   for (const name of allowed) {
     assert.strictEqual(ALLOWED_EXT_DEFAULT.test(name), true, `${name} should match`);

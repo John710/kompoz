@@ -68,16 +68,23 @@ function parseCookies(req) {
   return cookies;
 }
 
+let _authEnabledCache = null;
+const AUTH_CACHE_TTL_MS = 30000;
 async function isAuthEnabled() {
+  if (_authEnabledCache && Date.now() - _authEnabledCache.ts < AUTH_CACHE_TTL_MS) {
+    return _authEnabledCache.value;
+  }
+  let value = AUTH_ENABLED;
   if (process.env.DATABASE_URL) {
     try {
       const { rows } = await db.query('SELECT id FROM users LIMIT 1');
-      return rows.length > 0 || AUTH_ENABLED;
+      value = rows.length > 0 || AUTH_ENABLED;
     } catch {
-      return AUTH_ENABLED;
+      value = AUTH_ENABLED;
     }
   }
-  return AUTH_ENABLED;
+  _authEnabledCache = { value, ts: Date.now() };
+  return value;
 }
 
 async function requireAuth(req, res, next) {
@@ -128,6 +135,16 @@ async function requireAuth(req, res, next) {
 }
 
 app.use(requireAuth);
+
+// Security headers
+app.use((_req, res, next) => {
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.github.com;");
+  next();
+});
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, '../public'), { setHeaders: (res, path) => {
   if (path.endsWith('.html')) {
@@ -146,7 +163,21 @@ app.use('/api/network',  require('./routes/network'));
 
 // Rate limiter for login
 const loginAttempts = new Map();
+let loginRequestCount = 0;
+
+function cleanupStaleLoginAttempts() {
+  loginRequestCount++;
+  if (loginRequestCount % 100 !== 0) return;
+  const now = Date.now();
+  for (const [ip, attempts] of loginAttempts) {
+    const recent = attempts.filter(t => now - t < 15 * 60 * 1000);
+    if (recent.length === 0) loginAttempts.delete(ip);
+    else loginAttempts.set(ip, recent);
+  }
+}
+
 function checkRateLimit(ip) {
+  cleanupStaleLoginAttempts();
   const now = Date.now();
   const attempts = loginAttempts.get(ip) || [];
   const recent = attempts.filter(t => now - t < 15 * 60 * 1000);

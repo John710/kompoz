@@ -27,13 +27,13 @@ const Parser = (() => {
           internal: !!def.internal,
           external: !!def.external,
           subnet:   def.subnet   || null,
-          sourceFile: file.name,
+          sourceFile: file.path,
         };
       });
 
       // Top-level volumes
       Object.keys(p.volumes || {}).forEach(name => {
-        if (!volumes[name]) volumes[name] = { id: `vol:${name}`, name, sourceFile: file.name };
+        if (!volumes[name]) volumes[name] = { id: `vol:${name}`, name, sourceFile: file.path };
       });
 
       // Services
@@ -47,7 +47,7 @@ const Parser = (() => {
           networks:       def.networks       || [],
           namedVolumes:   def.namedVolumes   || [],
           depends_on:     def.depends_on     || [],
-          sourceFile:     file.name,
+          sourceFile:     file.path,
           type:           file.type,
         };
       });

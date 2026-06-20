@@ -252,6 +252,7 @@ app.post('/api/register', async (req, res) => {
       'INSERT INTO users (username, password_hash, name, is_admin) VALUES ($1, $2, $3, $4)',
       [username, hash, name || username, false]
     );
+    _authEnabledCache = null;
     res.json({ ok: true });
   } catch (err) {
     console.error('Registration error:', err);

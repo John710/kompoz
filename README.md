@@ -16,7 +16,7 @@
 | **🌐 Network Scanner** | Scan local subnets, discover devices by open ports and TCP fingerprints, and build a network topology map. |
 | **🛡️ Optional Auth** | Simple login with HMAC-signed cookies, or connect a PostgreSQL database for user management. |
 | **🌙 Dark/Light Theme** | Switch instantly with zero reload. |
-| **🌍 Bilingual** | English and Russian interface out of the box. |
+| **🌍 Multi-language** | English and Russian built in. Add your own translation file to `locales/` and open a PR.
 
 ---
 
@@ -87,8 +87,11 @@ Set these via environment variables:
 | `DATABASE_URL` | Optional PostgreSQL connection string | `postgres://user:pass@localhost:5432/db` |
 | `AUTH_USER` / `AUTH_PASS` | Login credentials (optional; enables auth) | `admin` / `secret` |
 | `AUTH_SECRET` | Cookie signing key (random string) | ` anything long ` |
+| `AUTH_ALLOW_REGISTER` | Allow new users to sign up (`true` / `false`) | `true` |
+| `COOKIE_SECURE` | Add `Secure` flag to auth cookie (for HTTPS) | `true` |
 | `FILE_EXT_WHITELIST` | Allow extra file extensions | `\.(yml|yaml|env|json)$` |
 | `ALLOW_ALL_EXTENSIONS` | Disable extension checks entirely | `true` |
+| `STATUS_CHECK_INTERVAL` | Container health check interval (ms) | `60000` |
 | `TZ` | Container timezone | `Europe/Moscow` |
 | `PORT` | HTTP port inside the container | `3710` |
 

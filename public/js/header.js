@@ -86,7 +86,7 @@ const Header = (function () {
       const avatarEl = document.getElementById('profileAvatar');
       if (d.enabled && d.user) {
         currentUser = d.user;
-        if (nameEl) nameEl.textContent = d.user.name || d.user.username || 'User';
+        if (nameEl) nameEl.textContent = d.user.username || d.user.name || 'User';
         if (avatarEl) {
           if (d.user.avatar) {
             avatarEl.innerHTML = `<img src="${d.user.avatar}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;">`;

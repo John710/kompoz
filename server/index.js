@@ -301,7 +301,7 @@ app.get('/api/me', async (req, res) => {
     const enabled = await isAuthEnabled();
     if (!enabled) return res.json({ enabled: false });
     if (!req.authUser) return res.status(401).json({ error: 'Unauthorized' });
-    res.json({ enabled: true, user: { name: req.authName || req.authUser } });
+    res.json({ enabled: true, user: { name: req.authName || req.authUser, username: req.authUser } });
   } catch (err) {
     console.error('Me error:', err);
     res.status(500).json({ error: 'Me error' });

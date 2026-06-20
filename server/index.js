@@ -229,6 +229,36 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// POST /api/register
+app.post('/api/register', async (req, res) => {
+  try {
+    if (!process.env.DATABASE_URL) {
+      return res.status(503).json({ error: 'Registration requires database', errorKey: 'errRegNoDb' });
+    }
+    if (process.env.AUTH_ALLOW_REGISTER !== 'true') {
+      return res.status(403).json({ error: 'Registration is disabled', errorKey: 'errRegDisabled' });
+    }
+    const { username, password, name } = req.body || {};
+    if (!username || !password || password.length < 6 || username.length < 2) {
+      return res.status(400).json({ error: 'Invalid input', errorKey: 'errRegInvalid' });
+    }
+    const { rows } = await db.query('SELECT id FROM users WHERE username = $1', [username]);
+    if (rows.length > 0) {
+      return res.status(409).json({ error: 'Username taken', errorKey: 'errRegTaken' });
+    }
+    const bcrypt = require('bcryptjs');
+    const hash = await bcrypt.hash(password, 10);
+    await db.query(
+      'INSERT INTO users (username, password_hash, name, is_admin) VALUES ($1, $2, $3, $4)',
+      [username, hash, name || username, false]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Registration error:', err);
+    res.status(500).json({ error: 'Registration error' });
+  }
+});
+
 // POST /api/logout
 app.post('/api/logout', async (req, res) => {
   try {

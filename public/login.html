@@ -19,24 +19,100 @@
     </svg>
     Kompoz
   </div>
-  <div class="login-field">
-    <label>Username</label>
-    <input type="text" id="username" placeholder="user" autocomplete="username" onkeydown="if(event.key==='Enter')submitLogin()">
+
+  <div id="loginForm">
+    <div class="login-field">
+      <label id="lblUser">Username</label>
+      <input type="text" id="username" placeholder="user" autocomplete="username" onkeydown="if(event.key==='Enter')submitForm()">
+    </div>
+    <div class="login-field" id="nameField" style="display:none">
+      <label id="lblName">Name</label>
+      <input type="text" id="displayName" placeholder="John" onkeydown="if(event.key==='Enter')submitForm()">
+    </div>
+    <div class="login-field">
+      <label id="lblPass">Password</label>
+      <input type="password" id="password" placeholder="••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitForm()">
+    </div>
+    <div class="login-field" id="confirmField" style="display:none">
+      <label id="lblConfirm">Confirm password</label>
+      <input type="password" id="confirmPassword" placeholder="••••••" onkeydown="if(event.key==='Enter')submitForm()">
+    </div>
+    <button class="login-btn" id="submitBtn" onclick="submitForm()">Sign in</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-links">
+      <a href="#" id="toggleLink" onclick="toggleMode();return false;">Create account</a>
+    </div>
   </div>
-  <div class="login-field">
-    <label>Password</label>
-    <input type="password" id="password" placeholder="••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitLogin()">
-  </div>
-  <button class="login-btn" onclick="submitLogin()">Sign in</button>
-  <div class="login-error" id="loginError">Invalid credentials</div>
 </div>
 
 <script>
-async function submitLogin() {
+let isRegister = false;
+
+function toggleMode() {
+  isRegister = !isRegister;
+  document.getElementById('nameField').style.display = isRegister ? '' : 'none';
+  document.getElementById('confirmField').style.display = isRegister ? '' : 'none';
+  document.getElementById('submitBtn').textContent = isRegister ? 'Create account' : 'Sign in';
+  document.getElementById('toggleLink').textContent = isRegister ? 'Sign in' : 'Create account';
+  document.getElementById('loginError').classList.remove('vis');
+}
+
+async function submitForm() {
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
+  const name = document.getElementById('displayName').value.trim();
+  const confirm = document.getElementById('confirmPassword').value;
   const errEl = document.getElementById('loginError');
   errEl.classList.remove('vis');
+
+  if (!username || !password) {
+    errEl.textContent = 'Please fill in all fields';
+    errEl.classList.add('vis');
+    return;
+  }
+
+  if (isRegister) {
+    if (password.length < 6) {
+      errEl.textContent = 'Password must be at least 6 characters';
+      errEl.classList.add('vis');
+      return;
+    }
+    if (password !== confirm) {
+      errEl.textContent = 'Passwords do not match';
+      errEl.classList.add('vis');
+      return;
+    }
+    try {
+      const r = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, name }),
+      });
+      const data = await r.json();
+      if (data.ok) {
+        // Auto-login after registration
+        const lr = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+        const ld = await lr.json();
+        if (ld.ok) window.location.href = '/';
+        else {
+          errEl.textContent = 'Registered! Please sign in.';
+          errEl.classList.add('vis');
+          toggleMode();
+        }
+      } else {
+        errEl.textContent = data.error || 'Registration failed';
+        errEl.classList.add('vis');
+      }
+    } catch(e) {
+      errEl.textContent = 'Network error';
+      errEl.classList.add('vis');
+    }
+    return;
+  }
 
   try {
     const r = await fetch('/api/login', {
@@ -48,6 +124,7 @@ async function submitLogin() {
     if (data.ok) {
       window.location.href = '/';
     } else {
+      errEl.textContent = 'Invalid credentials';
       errEl.classList.add('vis');
     }
   } catch(e) {

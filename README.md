@@ -1,87 +1,107 @@
 # Kompoz
 
-> Web-based editor & visualizer for Docker Compose files.
+> Self-hosted web editor & visualizer for your Docker Compose stacks.
 
-**Kompoz** is a lightweight, self-hosted web application for managing Docker Compose projects. It provides a file editor with YAML linting, service dependency maps, and a network topology scanner — all in a single container.
-
----
-
-## Features
-
-- **Project Management** — Create, rename, and organize multiple Docker Compose projects.
-- **File Editor** — Syntax-highlighted YAML editor with real-time linting via `dclint`. Edit `.yml`, `.env`, and secrets files side-by-side.
-- **Container Map** — Visualize service dependencies, networks, and volumes as an interactive tree.
-- **Network Map** — Scan your local network, discover devices, build topology diagrams, and manage links.
-- **Auth (optional)** — HMAC cookie-based or PostgreSQL-backed authentication.
-- **Multi-language** — English and Russian localization.
+**Kompoz** helps you edit, organize, and understand Docker Compose projects from a single web interface. Multi-project support, live YAML linting, interactive dependency maps, and a built-in network scanner — all in one lightweight container.
 
 ---
 
-## Architecture
+## What you get
 
-| Layer | Technology |
-|-------|------------|
-| Backend | Node.js 22, Express 5, `yaml` 2.9, `dclint` 3.1 |
-| Frontend | Vanilla JS, CodeMirror 5, D3.js, SVG |
-| Database | PostgreSQL 16 (optional; falls back to JSON files) |
-| Tests | `node:test` — 23 tests across 4 files |
-| Container | Docker (Node 22 Alpine), `su-exec` entrypoint |
-
----
-
-## Pages
-
-| Page | Description |
-|------|-------------|
-| **Index** (`/`) | Project list with quick-access action icons |
-| **Editor** (`/editor.html?project=...`) | YAML file editor with sidebar, tabs, and right panel |
-| **Container Map** (`/map.html?project=...`) | Visual service dependency tree |
-| **Network Map** (`/homelab.html`) | Network topology scanner & device manager |
+| Feature | What it does |
+|---------|-------------|
+| **📁 Project Manager** | Work with multiple compose stacks from one UI. Projects are auto-detected from mounted folders. |
+| **✏️ YAML Editor** | Syntax highlighting, error linting, and tabbed editing for `.yml`, `.env`, and secrets — powered by CodeMirror. |
+| **🗺️ Container Map** | Interactive graph of services, networks, and volumes. Zoom, pan, filter by type, and click any node to jump straight to its file. |
+| **🌐 Network Scanner** | Scan local subnets, discover devices by open ports and TCP fingerprints, and build a network topology map. |
+| **🛡️ Optional Auth** | Simple login with HMAC-signed cookies, or connect a PostgreSQL database for user management. |
+| **🌙 Dark/Light Theme** | Switch instantly with zero reload. |
+| **🌍 Bilingual** | English and Russian interface out of the box. |
 
 ---
 
 ## Quick Start
 
+The fastest way is Docker Compose:
+
 ```bash
 git clone https://github.com/John710/kompoz.git
 cd kompoz
-docker build -t ghcr.io/john710/kompoz:latest .
-docker run -p 3710:3710 -v /your/compose:/compose ghcr.io/john710/kompoz:latest
 ```
 
-Then open `http://localhost:3710`.
+Edit `docker-compose.yml` to point `volumes` at your actual compose folders, then:
 
----
+```bash
+docker compose up -d
+```
 
-## Environment Variables
+Open `http://localhost:3710`.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `3710` | HTTP server port |
-| `COMPOSE_MOUNTS` | — | Comma-separated host paths mounted into container |
-| `COMPOSE_ROOT` | `/compose` | Legacy fallback mount path |
-| `DATABASE_URL` | — | PostgreSQL connection string (optional) |
-| `AUTH_USER` | — | HMAC auth username (optional) |
-| `AUTH_PASS` | — | HMAC auth password (optional) |
-| `AUTH_SECRET` | — | HMAC signing secret (optional) |
-| `STATUS_CHECK_INTERVAL` | `60000` | Container health check interval (ms) |
-
----
-
-## Development
+### Without Docker
 
 ```bash
 npm install
-npm test        # Run all 23 tests
-npm start       # Start server on :3710
+npm start
 ```
+
+---
+
+## How it works
+
+### Mounting projects
+
+Point `COMPOSE_MOUNTS` to one or more folders on your host:
+
+```
+COMPOSE_MOUNTS=/mnt/docker,/mnt/server
+```
+
+Kompoz detects projects automatically:
+- **Direct mode** — a folder containing `.yml` or `.env` files is treated as one project.
+- **Multi mode** — a plain folder becomes a catalog, and every subfolder inside it is a separate project.
+
+You can override project names with a pipe:
+
+```
+COMPOSE_MOUNTS=/mnt/docker,/mnt/server,/mnt/trifi|Trifi
+```
+
+### Pages
+
+| Page | Path | Use for |
+|------|------|---------|
+| **Home** | `/` | Browse, create, and switch projects |
+| **Editor** | `/editor.html` | Edit compose files, secrets, and environment variables |
+| **Container Map** | `/map.html` | Visualize service dependencies and click any card to open its source file |
+| **Network Map** | `/homelab.html` | Scan your LAN, find devices, draw links between them |
+
+---
+
+## Configuration
+
+Set these via environment variables:
+
+| Variable | What it does | Example |
+|----------|-------------|---------|
+| `COMPOSE_MOUNTS` | Where your compose projects live (comma-separated) | `/mnt/docker` |
+| `DATABASE_URL` | Optional PostgreSQL connection string | `postgres://user:pass@localhost:5432/db` |
+| `AUTH_USER` / `AUTH_PASS` | Login credentials (optional; enables auth) | `admin` / `secret` |
+| `AUTH_SECRET` | Cookie signing key (random string) | ` anything long ` |
+| `FILE_EXT_WHITELIST` | Allow extra file extensions | `\.(yml|yaml|env|json)$` |
+| `ALLOW_ALL_EXTENSIONS` | Disable extension checks entirely | `true` |
+| `TZ` | Container timezone | `Europe/Moscow` |
+| `PORT` | HTTP port inside the container | `3710` |
+
+---
+
+## Tips
+
+- **Scanner inside LXC / Docker?** The network scanner needs `NET_RAW` capability for ICMP ping. In the provided Compose template this is handled via `cap_add` and `network_mode: host`. If devices still don't appear, make sure your LXC container is bridged to the LAN — NAT mode isolates the scanner.
+- **No database?** Kompoz works fine with just the filesystem. PostgreSQL is only needed if you want user accounts and scan history persistence.
+- **First launch** — if you don't see any projects, check that `COMPOSE_MOUNTS` points to the right host paths inside the container.
 
 ---
 
 ## License
 
 AGPL-3.0-or-later
-
----
-
-*Version 0.6.0 *

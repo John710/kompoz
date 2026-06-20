@@ -6,7 +6,7 @@ const db = require('./db');
 const execAsync = util.promisify(exec);
 
 // Common ports to scan (fastest first)
-const COMMON_PORTS = [22, 80, 443, 8080, 1883, 3389, 5900, 8123];
+const COMMON_PORTS = [22, 53, 80, 443, 445, 515, 631, 1883, 3389, 5900, 8060, 8080, 8123, 8443, 32400];
 const BATCH_SIZE = 20;
 const TCP_TIMEOUT = 500;
 const PING_TIMEOUT = 1500;
@@ -64,17 +64,24 @@ function tcpConnect(host, port, timeout = TCP_TIMEOUT) {
     const socket = new net.Socket();
     let resolved = false;
 
-    const onResult = (open) => {
+    const onResult = (open, alive = false) => {
       if (resolved) return;
       resolved = true;
       socket.destroy();
-      resolve(open ? port : false);
+      resolve({ open: open ? port : false, alive });
     };
 
     socket.setTimeout(timeout);
-    socket.once('connect', () => onResult(true));
-    socket.once('timeout', () => onResult(false));
-    socket.once('error', () => onResult(false));
+    socket.once('connect', () => onResult(true, true));
+    socket.once('timeout', () => onResult(false, false));
+    socket.once('error', (err) => {
+      // ECONNREFUSED means the host is up but the port is closed
+      if (err.code === 'ECONNREFUSED') {
+        onResult(false, true);
+      } else {
+        onResult(false, false);
+      }
+    });
     socket.connect(port, host);
   });
 }
@@ -88,19 +95,27 @@ async function pingHost(ip, timeout = PING_TIMEOUT) {
 }
 
 async function scanIp(ip) {
-  // Try TCP ports first (fast)
+  let isAlive = false;
   const openPorts = [];
   for (const port of COMMON_PORTS) {
     const result = await tcpConnect(ip, port);
-    if (result) openPorts.push(port);
+    if (result.open) openPorts.push(result.open);
+    if (result.alive) isAlive = true;
   }
 
   if (openPorts.length > 0) {
     return { ip, online: true, ports: openPorts };
   }
 
-  // Fallback to ping
+  if (isAlive) {
+    return { ip, online: true, ports: [] };
+  }
+
+  // Fallback to ping (may fail inside LXC / Docker without CAP_NET_RAW)
   const alive = await pingHost(ip);
+  if (!alive) {
+    // Ping failure inside a container is common; log it only once per scan
+  }
   return { ip, online: alive, ports: [] };
 }
 
